@@ -1,0 +1,405 @@
+[gd_scene format=3 uid="uid://oq18w3yhli6p"]
+
+[ext_resource type="Script" uid="uid://0uek6ffmend7" path="res://core/chain_joint.gd" id="1_chain"]
+[ext_resource type="Script" uid="uid://c6t5gdgwtst8t" path="res://creatures/ant/AntController.gd" id="2_controller"]
+[ext_resource type="Script" uid="uid://dv8j2npqfpqsd" path="res://creatures/ant/AntRenderer.gd" id="3_renderer"]
+[ext_resource type="Script" uid="uid://bix71xtonr4u2" path="res://core/ik_chain.gd" id="4_ikchain"]
+[ext_resource type="Script" uid="uid://ihy5udqs7ds5" path="res://core/ik_root.gd" id="5_ikroot"]
+[ext_resource type="Texture2D" uid="uid://ctou42dhffeyl" path="res://assets/circle.png" id="6_14rjx"]
+[ext_resource type="Script" uid="uid://cks4pjje05sbd" path="res://core/ik_target_ccd.gd" id="7_ccdiktarget"]
+
+[node name="Ant" type="Node2D" unique_id=786302651]
+script = ExtResource("2_controller")
+head_anchor_path = NodePath("Spine/HeadAnchor")
+head_path = NodePath("Spine/Head")
+thorax_path = NodePath("Spine/Thorax")
+petiole_path = NodePath("Spine/Petiole")
+abdomen_first_path = NodePath("Spine/Abdomen1")
+
+[node name="IKRoot" type="Node2D" parent="." unique_id=1473286096]
+position = Vector2(-6, -7.788287e-06)
+script = ExtResource("5_ikroot")
+
+[node name="LegFL" type="Node2D" parent="IKRoot" unique_id=2020682789]
+script = ExtResource("4_ikchain")
+metadata/_custom_type_script = "uid://bix71xtonr4u2"
+
+[node name="Hip" type="Node2D" parent="IKRoot/LegFL" unique_id=1779286570]
+position = Vector2(8, -8)
+script = ExtResource("4_ikchain")
+metadata/_custom_type_script = "uid://bix71xtonr4u2"
+
+[node name="Knee" type="Node2D" parent="IKRoot/LegFL/Hip" unique_id=914982496]
+position = Vector2(10, -14)
+script = ExtResource("4_ikchain")
+minimum_angle_degrees = -5.0
+maximum_angle_degrees = 90.0
+metadata/_custom_type_script = "uid://bix71xtonr4u2"
+
+[node name="Foot" type="Node2D" parent="IKRoot/LegFL/Hip/Knee" unique_id=1745109664]
+position = Vector2(8, -12)
+script = ExtResource("4_ikchain")
+minimum_angle_degrees = -5.0
+maximum_angle_degrees = 60.0
+metadata/_custom_type_script = "uid://bix71xtonr4u2"
+
+[node name="LegFR" type="Node2D" parent="IKRoot" unique_id=11680786]
+script = ExtResource("4_ikchain")
+metadata/_custom_type_script = "uid://bix71xtonr4u2"
+
+[node name="Hip" type="Node2D" parent="IKRoot/LegFR" unique_id=1366314692]
+position = Vector2(8, 8)
+script = ExtResource("4_ikchain")
+metadata/_custom_type_script = "uid://bix71xtonr4u2"
+
+[node name="Knee" type="Node2D" parent="IKRoot/LegFR/Hip" unique_id=1879355067]
+position = Vector2(10, 14)
+script = ExtResource("4_ikchain")
+minimum_angle_degrees = -90.0
+maximum_angle_degrees = 5.0
+metadata/_custom_type_script = "uid://bix71xtonr4u2"
+
+[node name="Foot" type="Node2D" parent="IKRoot/LegFR/Hip/Knee" unique_id=1657627195]
+position = Vector2(8, 12)
+script = ExtResource("4_ikchain")
+minimum_angle_degrees = -60.0
+maximum_angle_degrees = 5.0
+metadata/_custom_type_script = "uid://bix71xtonr4u2"
+
+[node name="LegML" type="Node2D" parent="IKRoot" unique_id=125851143]
+script = ExtResource("4_ikchain")
+metadata/_custom_type_script = "uid://bix71xtonr4u2"
+
+[node name="Hip" type="Node2D" parent="IKRoot/LegML" unique_id=588558604]
+position = Vector2(-2, -10)
+script = ExtResource("4_ikchain")
+metadata/_custom_type_script = "uid://bix71xtonr4u2"
+
+[node name="Knee" type="Node2D" parent="IKRoot/LegML/Hip" unique_id=1440501822]
+position = Vector2(-3, -16)
+script = ExtResource("4_ikchain")
+minimum_angle_degrees = -5.0
+maximum_angle_degrees = 90.0
+metadata/_custom_type_script = "uid://bix71xtonr4u2"
+
+[node name="Foot" type="Node2D" parent="IKRoot/LegML/Hip/Knee" unique_id=1664730197]
+position = Vector2(-2, -14)
+script = ExtResource("4_ikchain")
+minimum_angle_degrees = -5.0
+maximum_angle_degrees = 60.0
+metadata/_custom_type_script = "uid://bix71xtonr4u2"
+
+[node name="LegMR" type="Node2D" parent="IKRoot" unique_id=1393723562]
+script = ExtResource("4_ikchain")
+metadata/_custom_type_script = "uid://bix71xtonr4u2"
+
+[node name="Hip" type="Node2D" parent="IKRoot/LegMR" unique_id=1873236435]
+position = Vector2(-2, 10)
+script = ExtResource("4_ikchain")
+metadata/_custom_type_script = "uid://bix71xtonr4u2"
+
+[node name="Knee" type="Node2D" parent="IKRoot/LegMR/Hip" unique_id=538059165]
+position = Vector2(-3, 16)
+script = ExtResource("4_ikchain")
+minimum_angle_degrees = -90.0
+maximum_angle_degrees = 5.0
+metadata/_custom_type_script = "uid://bix71xtonr4u2"
+
+[node name="Foot" type="Node2D" parent="IKRoot/LegMR/Hip/Knee" unique_id=2113540173]
+position = Vector2(-2, 14)
+script = ExtResource("4_ikchain")
+minimum_angle_degrees = -60.0
+maximum_angle_degrees = 5.0
+metadata/_custom_type_script = "uid://bix71xtonr4u2"
+
+[node name="LegBL" type="Node2D" parent="IKRoot" unique_id=878359466]
+script = ExtResource("4_ikchain")
+metadata/_custom_type_script = "uid://bix71xtonr4u2"
+
+[node name="Hip" type="Node2D" parent="IKRoot/LegBL" unique_id=712855555]
+position = Vector2(-16, -8)
+script = ExtResource("4_ikchain")
+metadata/_custom_type_script = "uid://bix71xtonr4u2"
+
+[node name="Knee" type="Node2D" parent="IKRoot/LegBL/Hip" unique_id=2122920158]
+position = Vector2(-12, -12)
+script = ExtResource("4_ikchain")
+minimum_angle_degrees = -5.0
+maximum_angle_degrees = 45.0
+metadata/_custom_type_script = "uid://bix71xtonr4u2"
+
+[node name="Foot" type="Node2D" parent="IKRoot/LegBL/Hip/Knee" unique_id=2144712576]
+position = Vector2(-10, -10)
+script = ExtResource("4_ikchain")
+minimum_angle_degrees = -5.0
+maximum_angle_degrees = 60.0
+metadata/_custom_type_script = "uid://bix71xtonr4u2"
+
+[node name="LegBR" type="Node2D" parent="IKRoot" unique_id=1558448621]
+script = ExtResource("4_ikchain")
+metadata/_custom_type_script = "uid://bix71xtonr4u2"
+
+[node name="Hip" type="Node2D" parent="IKRoot/LegBR" unique_id=620324897]
+position = Vector2(-16, 8)
+script = ExtResource("4_ikchain")
+metadata/_custom_type_script = "uid://bix71xtonr4u2"
+
+[node name="Knee" type="Node2D" parent="IKRoot/LegBR/Hip" unique_id=1784771295]
+position = Vector2(-12, 12)
+script = ExtResource("4_ikchain")
+minimum_angle_degrees = -45.0
+maximum_angle_degrees = 5.0
+metadata/_custom_type_script = "uid://bix71xtonr4u2"
+
+[node name="Foot" type="Node2D" parent="IKRoot/LegBR/Hip/Knee" unique_id=1431308515]
+position = Vector2(-10, 10)
+script = ExtResource("4_ikchain")
+minimum_angle_degrees = -60.0
+maximum_angle_degrees = 5.0
+metadata/_custom_type_script = "uid://bix71xtonr4u2"
+
+[node name="AntennaIKRoot" type="Node2D" parent="." unique_id=638205859]
+position = Vector2(14, 0)
+script = ExtResource("5_ikroot")
+
+[node name="AntennaL" type="Node2D" parent="AntennaIKRoot" unique_id=279991450]
+script = ExtResource("4_ikchain")
+metadata/_custom_type_script = "uid://bix71xtonr4u2"
+
+[node name="Base" type="Node2D" parent="AntennaIKRoot/AntennaL" unique_id=1970236882]
+position = Vector2(6, -4)
+script = ExtResource("4_ikchain")
+minimum_angle_degrees = -10.0
+maximum_angle_degrees = 50.0
+metadata/_custom_type_script = "uid://bix71xtonr4u2"
+
+[node name="Seg1" type="Node2D" parent="AntennaIKRoot/AntennaL/Base" unique_id=1469659122]
+position = Vector2(7, -5)
+script = ExtResource("4_ikchain")
+minimum_angle_degrees = -10.0
+maximum_angle_degrees = 60.0
+metadata/_custom_type_script = "uid://bix71xtonr4u2"
+
+[node name="Seg2" type="Node2D" parent="AntennaIKRoot/AntennaL/Base/Seg1" unique_id=1214942986]
+position = Vector2(6, -3)
+script = ExtResource("4_ikchain")
+minimum_angle_degrees = -10.0
+maximum_angle_degrees = 60.0
+metadata/_custom_type_script = "uid://bix71xtonr4u2"
+
+[node name="Seg3" type="Node2D" parent="AntennaIKRoot/AntennaL/Base/Seg1/Seg2" unique_id=800850457]
+position = Vector2(5, -2)
+script = ExtResource("4_ikchain")
+minimum_angle_degrees = -10.0
+maximum_angle_degrees = 50.0
+metadata/_custom_type_script = "uid://bix71xtonr4u2"
+
+[node name="Tip" type="Node2D" parent="AntennaIKRoot/AntennaL/Base/Seg1/Seg2/Seg3" unique_id=982786769]
+position = Vector2(4, -1)
+script = ExtResource("4_ikchain")
+minimum_angle_degrees = -10.0
+maximum_angle_degrees = 30.0
+metadata/_custom_type_script = "uid://bix71xtonr4u2"
+
+[node name="AntennaR" type="Node2D" parent="AntennaIKRoot" unique_id=1859722142]
+script = ExtResource("4_ikchain")
+metadata/_custom_type_script = "uid://bix71xtonr4u2"
+
+[node name="Base" type="Node2D" parent="AntennaIKRoot/AntennaR" unique_id=1369500013]
+position = Vector2(6, 4)
+script = ExtResource("4_ikchain")
+minimum_angle_degrees = -50.0
+maximum_angle_degrees = 10.0
+metadata/_custom_type_script = "uid://bix71xtonr4u2"
+
+[node name="Seg1" type="Node2D" parent="AntennaIKRoot/AntennaR/Base" unique_id=1047168582]
+position = Vector2(7, 5)
+script = ExtResource("4_ikchain")
+minimum_angle_degrees = -60.0
+maximum_angle_degrees = 10.0
+metadata/_custom_type_script = "uid://bix71xtonr4u2"
+
+[node name="Seg2" type="Node2D" parent="AntennaIKRoot/AntennaR/Base/Seg1" unique_id=718531975]
+position = Vector2(6, 3)
+script = ExtResource("4_ikchain")
+minimum_angle_degrees = -60.0
+maximum_angle_degrees = 10.0
+metadata/_custom_type_script = "uid://bix71xtonr4u2"
+
+[node name="Seg3" type="Node2D" parent="AntennaIKRoot/AntennaR/Base/Seg1/Seg2" unique_id=1582687189]
+position = Vector2(5, 2)
+script = ExtResource("4_ikchain")
+minimum_angle_degrees = -50.0
+maximum_angle_degrees = 10.0
+metadata/_custom_type_script = "uid://bix71xtonr4u2"
+
+[node name="Tip" type="Node2D" parent="AntennaIKRoot/AntennaR/Base/Seg1/Seg2/Seg3" unique_id=773377731]
+position = Vector2(4, 1)
+script = ExtResource("4_ikchain")
+minimum_angle_degrees = -30.0
+maximum_angle_degrees = 10.0
+metadata/_custom_type_script = "uid://bix71xtonr4u2"
+
+[node name="Spine" type="Node2D" parent="." unique_id=1024632402]
+
+[node name="HeadAnchor" type="Node2D" parent="Spine" unique_id=888000001]
+top_level = true
+position = Vector2(28, 0)
+script = ExtResource("1_chain")
+minimum_distance = 5.0
+maximum_distance = 15.0
+minimum_angle_degrees = -180.0
+maximum_angle_degrees = 180.0
+anchored = true
+metadata/_custom_type_script = "uid://0uek6ffmend7"
+
+[node name="Head" type="Node2D" parent="Spine" unique_id=700535667]
+top_level = true
+position = Vector2(14, 0)
+script = ExtResource("1_chain")
+radius = 9.0
+maximum_distance = 0.0
+minimum_angle_degrees = -45.0
+maximum_angle_degrees = 45.0
+metadata/_custom_type_script = "uid://0uek6ffmend7"
+
+[node name="AntennaRemote" type="RemoteTransform2D" parent="Spine/Head" unique_id=999000002]
+remote_path = NodePath("../../../AntennaIKRoot")
+
+[node name="Thorax" type="Node2D" parent="Spine" unique_id=733739574]
+top_level = true
+position = Vector2(-6, -7.788287e-06)
+script = ExtResource("1_chain")
+radius = 11.0
+maximum_distance = 0.0
+minimum_angle_degrees = -30.0
+maximum_angle_degrees = 30.0
+metadata/_custom_type_script = "uid://0uek6ffmend7"
+
+[node name="RemoteTransform2D" type="RemoteTransform2D" parent="Spine/Thorax" unique_id=1091596318]
+remote_path = NodePath("../../../IKRoot")
+
+[node name="Petiole" type="Node2D" parent="Spine" unique_id=1161915424]
+top_level = true
+position = Vector2(-20.488888, 3.882272)
+rotation = -0.26179898
+script = ExtResource("1_chain")
+radius = 4.0
+maximum_distance = 0.0
+minimum_angle_degrees = -15.0
+maximum_angle_degrees = 15.0
+metadata/_custom_type_script = "uid://0uek6ffmend7"
+
+[node name="Abdomen1" type="Node2D" parent="Spine" unique_id=1938898655]
+top_level = true
+position = Vector2(-37.488888, 3.8822656)
+script = ExtResource("1_chain")
+radius = 13.0
+maximum_distance = 0.0
+minimum_angle_degrees = -15.0
+maximum_angle_degrees = 15.0
+metadata/_custom_type_script = "uid://0uek6ffmend7"
+
+[node name="IKTargets" type="Node2D" parent="." unique_id=999000001]
+
+[node name="LegFLTarget" type="Marker2D" parent="IKTargets" unique_id=2108615092 node_paths=PackedStringArray("ik_tip", "ik_chains", "ik_root")]
+top_level = true
+position = Vector2(26, -34)
+script = ExtResource("7_ccdiktarget")
+ik_tip = NodePath("../../IKRoot/LegFL/Hip/Knee/Foot")
+ik_chains = [NodePath("../../IKRoot/LegFL/Hip"), NodePath("../../IKRoot/LegFL/Hip/Knee")]
+ik_root = NodePath("../../IKRoot")
+
+[node name="Sprite2D" type="Sprite2D" parent="IKTargets/LegFLTarget" unique_id=173948223]
+z_index = 32
+scale = Vector2(0.115, 0.115)
+texture = ExtResource("6_14rjx")
+
+[node name="LegFRTarget" type="Marker2D" parent="IKTargets" unique_id=1286646396 node_paths=PackedStringArray("ik_tip", "ik_chains", "ik_root")]
+top_level = true
+position = Vector2(26, 34)
+script = ExtResource("7_ccdiktarget")
+ik_tip = NodePath("../../IKRoot/LegFR/Hip/Knee/Foot")
+ik_chains = [NodePath("../../IKRoot/LegFR/Hip"), NodePath("../../IKRoot/LegFR/Hip/Knee")]
+ik_root = NodePath("../../IKRoot")
+
+[node name="Sprite2D" type="Sprite2D" parent="IKTargets/LegFRTarget" unique_id=1776496848]
+z_index = 32
+scale = Vector2(0.115, 0.115)
+texture = ExtResource("6_14rjx")
+
+[node name="LegMLTarget" type="Marker2D" parent="IKTargets" unique_id=333505720 node_paths=PackedStringArray("ik_tip", "ik_chains", "ik_root")]
+top_level = true
+position = Vector2(-7, -40)
+script = ExtResource("7_ccdiktarget")
+ik_tip = NodePath("../../IKRoot/LegML/Hip/Knee/Foot")
+ik_chains = [NodePath("../../IKRoot/LegML/Hip"), NodePath("../../IKRoot/LegML/Hip/Knee")]
+ik_root = NodePath("../../IKRoot")
+
+[node name="Sprite2D" type="Sprite2D" parent="IKTargets/LegMLTarget" unique_id=850574542]
+z_index = 32
+scale = Vector2(0.115, 0.115)
+texture = ExtResource("6_14rjx")
+
+[node name="LegMRTarget" type="Marker2D" parent="IKTargets" unique_id=864764014 node_paths=PackedStringArray("ik_tip", "ik_chains", "ik_root")]
+top_level = true
+position = Vector2(-7, 40)
+script = ExtResource("7_ccdiktarget")
+ik_tip = NodePath("../../IKRoot/LegMR/Hip/Knee/Foot")
+ik_chains = [NodePath("../../IKRoot/LegMR/Hip"), NodePath("../../IKRoot/LegMR/Hip/Knee")]
+ik_root = NodePath("../../IKRoot")
+
+[node name="Sprite2D" type="Sprite2D" parent="IKTargets/LegMRTarget" unique_id=494262390]
+z_index = 32
+scale = Vector2(0.115, 0.115)
+texture = ExtResource("6_14rjx")
+
+[node name="LegBLTarget" type="Marker2D" parent="IKTargets" unique_id=1895868316 node_paths=PackedStringArray("ik_tip", "ik_chains", "ik_root")]
+top_level = true
+position = Vector2(-44, -31)
+script = ExtResource("7_ccdiktarget")
+ik_tip = NodePath("../../IKRoot/LegBL/Hip/Knee/Foot")
+ik_chains = [NodePath("../../IKRoot/LegBL/Hip"), NodePath("../../IKRoot/LegBL/Hip/Knee")]
+ik_root = NodePath("../../IKRoot")
+metadata/_custom_type_script = "uid://36mtf20wysjf"
+
+[node name="Sprite2D" type="Sprite2D" parent="IKTargets/LegBLTarget" unique_id=1609684441]
+z_index = 32
+scale = Vector2(0.115, 0.115)
+texture = ExtResource("6_14rjx")
+
+[node name="LegBRTarget" type="Marker2D" parent="IKTargets" unique_id=692372001 node_paths=PackedStringArray("ik_tip", "ik_chains", "ik_root")]
+top_level = true
+position = Vector2(-44, 31)
+script = ExtResource("7_ccdiktarget")
+ik_tip = NodePath("../../IKRoot/LegBR/Hip/Knee/Foot")
+ik_chains = [NodePath("../../IKRoot/LegBR/Hip/Knee"), NodePath("../../IKRoot/LegBR/Hip/Knee/Foot")]
+ik_root = NodePath("../../IKRoot")
+metadata/_custom_type_script = "uid://36mtf20wysjf"
+
+[node name="Sprite2D" type="Sprite2D" parent="IKTargets/LegBRTarget" unique_id=85418213]
+z_index = 32
+scale = Vector2(0.115, 0.115)
+texture = ExtResource("6_14rjx")
+
+[node name="AntennaLTarget" type="Marker2D" parent="IKTargets" unique_id=2089427446 node_paths=PackedStringArray("ik_tip", "ik_chains", "ik_root")]
+top_level = true
+position = Vector2(48, -15)
+script = ExtResource("7_ccdiktarget")
+ik_tip = NodePath("../../AntennaIKRoot/AntennaL/Base/Seg1/Seg2/Seg3/Tip")
+ik_chains = [NodePath("../../AntennaIKRoot/AntennaL/Base"), NodePath("../../AntennaIKRoot/AntennaL/Base/Seg1"), NodePath("../../AntennaIKRoot/AntennaL/Base/Seg1/Seg2"), NodePath("../../AntennaIKRoot/AntennaL/Base/Seg1/Seg2/Seg3")]
+ik_root = NodePath("../../AntennaIKRoot")
+
+[node name="AntennaRTarget" type="Marker2D" parent="IKTargets" unique_id=425200065 node_paths=PackedStringArray("ik_tip", "ik_chains", "ik_root")]
+top_level = true
+position = Vector2(48, 15)
+script = ExtResource("7_ccdiktarget")
+ik_tip = NodePath("../../AntennaIKRoot/AntennaR/Base/Seg1/Seg2/Seg3/Tip")
+ik_chains = [NodePath("../../AntennaIKRoot/AntennaR/Base"), NodePath("../../AntennaIKRoot/AntennaR/Base/Seg1"), NodePath("../../AntennaIKRoot/AntennaR/Base/Seg1/Seg2"), NodePath("../../AntennaIKRoot/AntennaR/Base/Seg1/Seg2/Seg3")]
+ik_root = NodePath("../../AntennaIKRoot")
+
+[node name="AntRenderer" type="Node2D" parent="." unique_id=1102421566]
+script = ExtResource("3_renderer")
+
+[node name="Camera2D" type="Camera2D" parent="." unique_id=1640481304]
+zoom = Vector2(1.705, 1.705)

@@ -1,0 +1,125 @@
+[gd_scene format=3 uid="uid://3vhasxgatnnp"]
+
+[ext_resource type="Script" uid="uid://ihy5udqs7ds5" path="res://core/ik_root.gd" id="1_e3tml"]
+[ext_resource type="Script" uid="uid://bix71xtonr4u2" path="res://core/ik_chain.gd" id="1_pb1ji"]
+[ext_resource type="Script" uid="uid://cks4pjje05sbd" path="res://core/ik_target_ccd.gd" id="3_ccdiktarget"]
+
+[sub_resource type="SkeletonModification2DCCDIK" id="SkeletonModification2DCCDIK_k3b6h"]
+target_nodepath = NodePath("Marker2D")
+tip_nodepath = NodePath("Bone2D/Bone2D/Bone2D")
+ccdik_data_chain_length = 2
+joint_data/0/bone_index = 0
+joint_data/0/bone2d_node = NodePath("Bone2D")
+joint_data/0/rotate_from_joint = false
+joint_data/0/enable_constraint = true
+joint_data/0/constraint_angle_min = -56.752995
+joint_data/0/constraint_angle_max = 3.4639997
+joint_data/0/constraint_angle_invert = true
+joint_data/0/constraint_in_localspace = true
+joint_data/0/editor_draw_gizmo = true
+joint_data/1/bone_index = 1
+joint_data/1/bone2d_node = NodePath("Bone2D/Bone2D")
+joint_data/1/rotate_from_joint = false
+joint_data/1/enable_constraint = false
+joint_data/1/editor_draw_gizmo = true
+
+[sub_resource type="SkeletonModificationStack2D" id="SkeletonModificationStack2D_hfimk"]
+enabled = true
+modification_count = 1
+modifications/0 = SubResource("SkeletonModification2DCCDIK_k3b6h")
+
+[sub_resource type="SkeletonModification2DTwoBoneIK" id="SkeletonModification2DTwoBoneIK_806od"]
+target_nodepath = NodePath("Marker2D")
+target_maximum_distance = 42.49
+flip_bend_direction = true
+joint_one_bone_idx = 2
+joint_one_bone2d_node = NodePath("Bone2D/Bone2D/Bone2D")
+joint_two_bone_idx = 1
+joint_two_bone2d_node = NodePath("Bone2D/Bone2D")
+editor/draw_min_max = true
+
+[sub_resource type="SkeletonModificationStack2D" id="SkeletonModificationStack2D_y66ws"]
+enabled = true
+modification_count = 1
+modifications/0 = SubResource("SkeletonModification2DTwoBoneIK_806od")
+
+[node name="TAnt" type="Node2D" unique_id=1067389297]
+
+[node name="IKRoot" type="Node2D" parent="." unique_id=287482338]
+position = Vector2(30, 29)
+script = ExtResource("1_e3tml")
+metadata/_custom_type_script = "uid://ihy5udqs7ds5"
+
+[node name="IKChain" type="Node2D" parent="IKRoot" unique_id=1315423668]
+rotation = 0.2683662
+script = ExtResource("1_pb1ji")
+metadata/_custom_type_script = "uid://bix71xtonr4u2"
+
+[node name="IKChain" type="Node2D" parent="IKRoot/IKChain" unique_id=656878976]
+position = Vector2(15, 0)
+script = ExtResource("1_pb1ji")
+metadata/_custom_type_script = "uid://bix71xtonr4u2"
+
+[node name="IKChain" type="Node2D" parent="IKRoot/IKChain/IKChain" unique_id=855155203]
+position = Vector2(23, 0)
+script = ExtResource("1_pb1ji")
+metadata/_custom_type_script = "uid://bix71xtonr4u2"
+
+[node name="IKChain2" type="Node2D" parent="IKRoot" unique_id=1732649970]
+position = Vector2(0, -22)
+script = ExtResource("1_pb1ji")
+metadata/_custom_type_script = "uid://bix71xtonr4u2"
+
+[node name="IKChain" type="Node2D" parent="IKRoot/IKChain2" unique_id=963129634]
+position = Vector2(27, 0)
+script = ExtResource("1_pb1ji")
+metadata/_custom_type_script = "uid://bix71xtonr4u2"
+
+[node name="IKChain" type="Node2D" parent="IKRoot/IKChain2/IKChain" unique_id=225725323]
+position = Vector2(24, 0)
+script = ExtResource("1_pb1ji")
+metadata/_custom_type_script = "uid://bix71xtonr4u2"
+
+[node name="IKTarget" type="Marker2D" parent="." unique_id=2029380711 node_paths=PackedStringArray("ik_tip", "ik_chains", "ik_root")]
+position = Vector2(72, 40)
+script = ExtResource("3_ccdiktarget")
+ik_tip = NodePath("../IKRoot/IKChain/IKChain/IKChain")
+ik_chains = [NodePath("../IKRoot/IKChain"), NodePath("../IKRoot/IKChain/IKChain")]
+ik_root = NodePath("../IKRoot")
+
+[node name="Skeleton2D" type="Skeleton2D" parent="." unique_id=36490550]
+modification_stack = SubResource("SkeletonModificationStack2D_hfimk")
+
+[node name="Bone2D" type="Bone2D" parent="Skeleton2D" unique_id=578082825]
+metadata/_local_pose_override_enabled_ = true
+
+[node name="Bone2D" type="Bone2D" parent="Skeleton2D/Bone2D" unique_id=653613226]
+position = Vector2(14, -10)
+metadata/_local_pose_override_enabled_ = true
+
+[node name="Bone2D" type="Bone2D" parent="Skeleton2D/Bone2D/Bone2D" unique_id=1506304080]
+position = Vector2(24, -5)
+
+[node name="Marker2D" type="Marker2D" parent="Skeleton2D" unique_id=705714532]
+position = Vector2(25, 11)
+
+[node name="Skeleton2D2" type="Skeleton2D" parent="." unique_id=1388412273]
+position = Vector2(120, 57)
+modification_stack = SubResource("SkeletonModificationStack2D_y66ws")
+
+[node name="Bone2D" type="Bone2D" parent="Skeleton2D2" unique_id=631284876]
+rotation = -0.026797106
+scale = Vector2(0.9999921, 0.9999921)
+
+[node name="Bone2D" type="Bone2D" parent="Skeleton2D2/Bone2D" unique_id=537240301]
+position = Vector2(14.000162, -10.000123)
+rotation = -0.4148547
+scale = Vector2(1.0000045, 1.0000045)
+metadata/_local_pose_override_enabled_ = true
+
+[node name="Bone2D" type="Bone2D" parent="Skeleton2D2/Bone2D/Bone2D" unique_id=1283109695]
+position = Vector2(24, -5)
+metadata/_local_pose_override_enabled_ = true
+
+[node name="Marker2D" type="Marker2D" parent="Skeleton2D2" unique_id=1442663921]
+position = Vector2(50, -54)
