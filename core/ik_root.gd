@@ -15,20 +15,20 @@ func _init() -> void:
 	add_child(skeleton)
 
 func _ready() -> void:
-	skeleton.owner = self
 	# 递归将每个 IKChain 的 bone 按层级挂入 skeleton
 	for child: Node in get_children():
 		if child is IKChain:
 			_mount_chain_recursive(child, skeleton)
 
-
-func _mount_chain_recursive(chain: IKChain, parent_node: Node) -> void:
+func _mount_chain_recursive(chain: IKChain, parent_node: Node2D) -> void:
 	var seg_bone: Bone2D = chain.bone
 	seg_bone.name = chain.name
+	seg_bone.transform = chain.transform
+	seg_bone.rest = transform
 	# 先添加到父节点，再设置全局变换
 	parent_node.add_child(seg_bone)
 	# 使用 global_transform 确保位置正确，无论父节点有何变换
-	seg_bone.global_transform = chain.global_transform
+	#seg_bone.global_transform = chain.global_transform
 	for child: IKChain in chain.get_children():
 		if child is IKChain:
 			_mount_chain_recursive(child, seg_bone)

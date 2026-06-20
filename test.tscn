@@ -1,0 +1,37 @@
+[gd_scene format=3 uid="uid://cxcivnaue76sc"]
+
+[ext_resource type="Script" uid="uid://cicoqpywylsrp" path="res://core/joint_bone.gd" id="1_37kl0"]
+[ext_resource type="Script" uid="uid://c8tf8n1o8s3qt" path="res://core/ik_controller.gd" id="2_8uh7m"]
+
+[node name="Test" type="Node2D" unique_id=1810328392]
+
+[node name="JointBone" type="Node2D" parent="." unique_id=1936344992]
+script = ExtResource("1_37kl0")
+
+[node name="JointBone" type="Node2D" parent="JointBone" unique_id=1205200321]
+position = Vector2(15.454814, -4.1411047)
+script = ExtResource("1_37kl0")
+minimum_angle_degrees = -90.0
+maximum_angle_degrees = -15.0
+
+[node name="JointBone" type="Node2D" parent="JointBone/JointBone" unique_id=1778049039]
+position = Vector2(11.62878, 10.989607)
+rotation = -11.058002
+script = ExtResource("1_37kl0")
+minimum_angle_degrees = 45.0
+
+[node name="JointBone" type="Node2D" parent="JointBone/JointBone/JointBone" unique_id=201285473]
+position = Vector2(11.693688, -10.920515)
+rotation = 6.112555
+script = ExtResource("1_37kl0")
+minimum_angle_degrees = -90.0
+maximum_angle_degrees = 0.0
+
+[node name="IKController" type="Node2D" parent="." unique_id=1442856072 node_paths=PackedStringArray("joint_bones")]
+position = Vector2(41, 20)
+script = ExtResource("2_8uh7m")
+joint_bones = [NodePath("../JointBone/JointBone"), NodePath("../JointBone/JointBone/JointBone"), NodePath("../JointBone/JointBone/JointBone/JointBone")]
+is_running_in_editor = true
+metadata/_custom_type_script = "uid://c8tf8n1o8s3qt"
+
+[node name="Camera2D" type="Camera2D" parent="." unique_id=203749129]

@@ -1,0 +1,255 @@
+[gd_scene format=3 uid="uid://b3k7m8oamilli"]
+
+[ext_resource type="Script" uid="uid://0uek6ffmend7" path="res://core/chain_joint.gd" id="1_chain"]
+[ext_resource type="Script" uid="uid://cfebevs8ir1ga" path="res://creatures/millipede/MillipedeController.gd" id="2_controller"]
+[ext_resource type="Script" uid="uid://cx0ue7woiq655" path="res://creatures/millipede/MillipedeRenderer.gd" id="3_renderer"]
+
+[node name="Millipede" type="Node2D" unique_id=300000001 node_paths=PackedStringArray("head_anchor", "head", "segment_joints", "tail")]
+script = ExtResource("2_controller")
+head_anchor = NodePath("Spine/HeadAnchor")
+head = NodePath("Spine/Head")
+segment_joints = [NodePath("Spine/Seg0"), NodePath("Spine/Seg1"), NodePath("Spine/Seg2"), NodePath("Spine/Seg3"), NodePath("Spine/Seg4"), NodePath("Spine/Seg5"), NodePath("Spine/Seg6"), NodePath("Spine/Seg7"), NodePath("Spine/Seg8"), NodePath("Spine/Seg9"), NodePath("Spine/Seg10"), NodePath("Spine/Seg11"), NodePath("Spine/Seg12"), NodePath("Spine/Seg13"), NodePath("Spine/Seg14"), NodePath("Spine/Seg15"), NodePath("Spine/Seg16"), NodePath("Spine/Seg17"), NodePath("Spine/Seg18"), NodePath("Spine/Seg19")]
+tail = NodePath("Spine/Tail")
+
+[node name="Spine" type="Node2D" parent="." unique_id=300000002]
+
+[node name="HeadAnchor" type="Node2D" parent="Spine" unique_id=300000003]
+top_level = true
+position = Vector2(5.99852, 0)
+script = ExtResource("1_chain")
+radius = 3.0
+minimum_distance = 5.0
+maximum_distance = 10.0
+minimum_angle_degrees = -180.0
+maximum_angle_degrees = 180.0
+anchored = true
+metadata/_custom_type_script = "uid://0uek6ffmend7"
+
+[node name="Head" type="Node2D" parent="Spine" unique_id=300000004]
+top_level = true
+position = Vector2(-0.0014801025, 2.3841858e-07)
+script = ExtResource("1_chain")
+radius = 3.0
+maximum_distance = 0.0
+minimum_angle_degrees = -30.0
+maximum_angle_degrees = 30.0
+metadata/_custom_type_script = "uid://0uek6ffmend7"
+
+[node name="Seg0" type="Node2D" parent="Spine" unique_id=300000005]
+top_level = true
+position = Vector2(-6.00148, 4.053116e-06)
+script = ExtResource("1_chain")
+radius = 3.0
+maximum_distance = 0.0
+minimum_angle_degrees = -60.0
+maximum_angle_degrees = 60.0
+metadata/_custom_type_script = "uid://0uek6ffmend7"
+
+[node name="Seg1" type="Node2D" parent="Spine" unique_id=300000006]
+top_level = true
+position = Vector2(-12.00148, 1.9311905e-05)
+script = ExtResource("1_chain")
+radius = 3.0
+maximum_distance = 0.0
+minimum_angle_degrees = -60.0
+maximum_angle_degrees = 60.0
+metadata/_custom_type_script = "uid://0uek6ffmend7"
+
+[node name="Seg2" type="Node2D" parent="Spine" unique_id=300000007]
+top_level = true
+position = Vector2(-18.00148, 7.891655e-05)
+script = ExtResource("1_chain")
+radius = 3.0
+maximum_distance = 0.0
+minimum_angle_degrees = -60.0
+maximum_angle_degrees = 60.0
+metadata/_custom_type_script = "uid://0uek6ffmend7"
+
+[node name="Seg3" type="Node2D" parent="Spine" unique_id=300000008]
+top_level = true
+position = Vector2(-24.00148, 0.00026011467)
+rotation = -3.0191739e-05
+script = ExtResource("1_chain")
+radius = 3.0
+maximum_distance = 0.0
+minimum_angle_degrees = -60.0
+maximum_angle_degrees = 60.0
+metadata/_custom_type_script = "uid://0uek6ffmend7"
+
+[node name="Seg4" type="Node2D" parent="Spine" unique_id=300000009]
+top_level = true
+position = Vector2(-30.00148, 0.0007157326)
+rotation = -7.596811e-05
+script = ExtResource("1_chain")
+radius = 3.0
+maximum_distance = 0.0
+minimum_angle_degrees = -60.0
+maximum_angle_degrees = 60.0
+metadata/_custom_type_script = "uid://0uek6ffmend7"
+
+[node name="Seg5" type="Node2D" parent="Spine" unique_id=300000010]
+top_level = true
+position = Vector2(-36.00148, 0.0017108917)
+rotation = -0.00016585192
+script = ExtResource("1_chain")
+radius = 3.0
+maximum_distance = 0.0
+minimum_angle_degrees = -60.0
+maximum_angle_degrees = 60.0
+metadata/_custom_type_script = "uid://0uek6ffmend7"
+
+[node name="Seg6" type="Node2D" parent="Spine" unique_id=300000011]
+top_level = true
+position = Vector2(-42.00148, 0.0036644458)
+rotation = -0.00032559235
+script = ExtResource("1_chain")
+radius = 3.0
+maximum_distance = 0.0
+minimum_angle_degrees = -60.0
+maximum_angle_degrees = 60.0
+metadata/_custom_type_script = "uid://0uek6ffmend7"
+
+[node name="Seg7" type="Node2D" parent="Spine" unique_id=300000012]
+top_level = true
+position = Vector2(-48.00148, 0.0071529387)
+rotation = -0.00058141554
+script = ExtResource("1_chain")
+radius = 3.0
+maximum_distance = 0.0
+minimum_angle_degrees = -60.0
+maximum_angle_degrees = 60.0
+metadata/_custom_type_script = "uid://0uek6ffmend7"
+
+[node name="Seg8" type="Node2D" parent="Spine" unique_id=300000013]
+top_level = true
+position = Vector2(-54.001476, -5.229376e-07)
+rotation = 0.0011922439
+script = ExtResource("1_chain")
+radius = 3.0
+maximum_distance = 0.0
+minimum_angle_degrees = -60.0
+maximum_angle_degrees = 60.0
+metadata/_custom_type_script = "uid://0uek6ffmend7"
+
+[node name="Seg9" type="Node2D" parent="Spine" unique_id=300000014]
+top_level = true
+position = Vector2(-60.001476, 3.8303722e-07)
+script = ExtResource("1_chain")
+radius = 3.0
+maximum_distance = 0.0
+minimum_angle_degrees = -60.0
+maximum_angle_degrees = 60.0
+metadata/_custom_type_script = "uid://0uek6ffmend7"
+
+[node name="Seg10" type="Node2D" parent="Spine" unique_id=300000015]
+top_level = true
+position = Vector2(-66.00148, -5.229376e-07)
+script = ExtResource("1_chain")
+radius = 3.0
+maximum_distance = 0.0
+minimum_angle_degrees = -60.0
+maximum_angle_degrees = 60.0
+metadata/_custom_type_script = "uid://0uek6ffmend7"
+
+[node name="Seg11" type="Node2D" parent="Spine" unique_id=300000016]
+top_level = true
+position = Vector2(-72.00148, 3.8303722e-07)
+script = ExtResource("1_chain")
+radius = 3.0
+maximum_distance = 0.0
+minimum_angle_degrees = -60.0
+maximum_angle_degrees = 60.0
+metadata/_custom_type_script = "uid://0uek6ffmend7"
+
+[node name="Seg12" type="Node2D" parent="Spine" unique_id=300000017]
+top_level = true
+position = Vector2(-78.00148, -5.229376e-07)
+script = ExtResource("1_chain")
+radius = 3.0
+maximum_distance = 0.0
+minimum_angle_degrees = -60.0
+maximum_angle_degrees = 60.0
+metadata/_custom_type_script = "uid://0uek6ffmend7"
+
+[node name="Seg13" type="Node2D" parent="Spine" unique_id=300000018]
+top_level = true
+position = Vector2(-84.00148, 3.8303722e-07)
+script = ExtResource("1_chain")
+radius = 3.0
+maximum_distance = 0.0
+minimum_angle_degrees = -60.0
+maximum_angle_degrees = 60.0
+metadata/_custom_type_script = "uid://0uek6ffmend7"
+
+[node name="Seg14" type="Node2D" parent="Spine" unique_id=300000019]
+top_level = true
+position = Vector2(-90.00148, 1.4163616e-05)
+script = ExtResource("1_chain")
+radius = 3.0
+maximum_distance = 0.0
+minimum_angle_degrees = -60.0
+maximum_angle_degrees = 60.0
+metadata/_custom_type_script = "uid://0uek6ffmend7"
+
+[node name="Seg15" type="Node2D" parent="Spine" unique_id=300000020]
+top_level = true
+position = Vector2(-96.00148, 3.8303733e-07)
+script = ExtResource("1_chain")
+radius = 3.0
+maximum_distance = 0.0
+minimum_angle_degrees = -60.0
+maximum_angle_degrees = 60.0
+metadata/_custom_type_script = "uid://0uek6ffmend7"
+
+[node name="Seg16" type="Node2D" parent="Spine" unique_id=300000021]
+top_level = true
+position = Vector2(-102.00148, -5.229375e-07)
+script = ExtResource("1_chain")
+radius = 3.0
+maximum_distance = 0.0
+minimum_angle_degrees = -60.0
+maximum_angle_degrees = 60.0
+metadata/_custom_type_script = "uid://0uek6ffmend7"
+
+[node name="Seg17" type="Node2D" parent="Spine" unique_id=300000022]
+top_level = true
+position = Vector2(-108.00148, 3.8303733e-07)
+script = ExtResource("1_chain")
+radius = 3.0
+maximum_distance = 0.0
+minimum_angle_degrees = -60.0
+maximum_angle_degrees = 60.0
+metadata/_custom_type_script = "uid://0uek6ffmend7"
+
+[node name="Seg18" type="Node2D" parent="Spine" unique_id=300000023]
+top_level = true
+position = Vector2(-114.00148, -5.229375e-07)
+script = ExtResource("1_chain")
+radius = 3.0
+maximum_distance = 0.0
+minimum_angle_degrees = -60.0
+maximum_angle_degrees = 60.0
+metadata/_custom_type_script = "uid://0uek6ffmend7"
+
+[node name="Seg19" type="Node2D" parent="Spine" unique_id=300000024]
+top_level = true
+position = Vector2(-120.00148, 3.8303733e-07)
+script = ExtResource("1_chain")
+radius = 3.0
+maximum_distance = 0.0
+minimum_angle_degrees = -60.0
+maximum_angle_degrees = 60.0
+metadata/_custom_type_script = "uid://0uek6ffmend7"
+
+[node name="Tail" type="Node2D" parent="Spine" unique_id=300000025]
+top_level = true
+position = Vector2(-126.00148, -5.229375e-07)
+script = ExtResource("1_chain")
+radius = 3.0
+maximum_distance = 0.0
+minimum_angle_degrees = -15.0
+maximum_angle_degrees = 15.0
+metadata/_custom_type_script = "uid://0uek6ffmend7"
+
+[node name="Renderer" type="Node2D" parent="." unique_id=300000026]
+script = ExtResource("3_renderer")

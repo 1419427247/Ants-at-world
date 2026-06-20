@@ -21,10 +21,11 @@ func _setup_modification() -> void:
 		# bone2d_node 必须是相对于 Skeleton2D 的路径
 		ccdik.set_ccdik_joint_bone2d_node(i, ik_root.skeleton.get_path_to(seg.bone))
 		ccdik.set_ccdik_joint_bone_index(i, seg.bone.get_index_in_skeleton())
-		ccdik.set_ccdik_joint_enable_constraint(i, true)
-		ccdik.set_ccdik_joint_constraint_angle_invert(i, true)
+		ccdik.set_ccdik_joint_enable_constraint(i, seg.enable_constraint)
+		ccdik.set_ccdik_joint_constraint_angle_invert(i, seg.constraint_angle_invert)
 		ccdik.set_ccdik_joint_constraint_angle_min(i, deg_to_rad(seg.minimum_angle_degrees))
 		ccdik.set_ccdik_joint_constraint_angle_max(i, deg_to_rad(seg.maximum_angle_degrees))
+		ccdik.set_ccdik_joint_rotate_from_joint(i, seg.rotate_from_joint)
 
 	# tip_nodepath 也必须是相对于 Skeleton2D 的路径
 	ccdik.tip_nodepath = ik_root.skeleton.get_path_to(ik_tip.bone)

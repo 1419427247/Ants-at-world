@@ -272,7 +272,7 @@ func _draw_antennae() -> void:
 		# 收集触角所有关节位置
 		var points: PackedVector2Array = []
 		points.append(to_local(antenna_data.base.global_position))
-		for segment: IKChain in antenna_data.segments:
+		for segment: JointBone in antenna_data.segments:
 			if segment:
 				points.append(to_local(segment.global_position))
 		points.append(to_local(antenna_data.tip.global_position))

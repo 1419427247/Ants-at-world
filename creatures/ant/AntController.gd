@@ -1,26 +1,19 @@
 class_name AntController extends Node2D
-## 蚂蚁控制器 — 引用场景中的 ChainJoint 节点，处理移动和步态
+## 蚂蚁控制器 — 引用场景中的 JointBone 节点，处理移动和步态
 
 # ===================== 脊柱关节 =====================
-@export_node_path("ChainJoint") var head_anchor_path: NodePath
-@export_node_path("ChainJoint") var head_path: NodePath
-@export_node_path("ChainJoint") var thorax_path: NodePath
-@export_node_path("ChainJoint") var petiole_path: NodePath
-@export_node_path("ChainJoint") var abdomen_first_path: NodePath
-
-var head_anchor: ChainJoint
-var head: ChainJoint
-var thorax: ChainJoint
-var petiole: ChainJoint
-var abdomen_first: ChainJoint
+@export var head_anchor: ChainJoint
+@export var head: ChainJoint
+@export var thorax: ChainJoint
+@export var petiole: ChainJoint
+@export var abdomen_first: ChainJoint
 
 # ===================== 腿部数据 =====================
 class LegData extends RefCounted:
-	var hip: IKChain
-	var knee: IKChain
-	var foot: IKChain
-	var foot_target: Node2D
-	var ik_chain: IKChain
+	var hip: JointBone
+	var knee: JointBone
+	var foot: JointBone
+	var ik_controller: IKController
 	var body_attachment: ChainJoint
 	var attach_offset: Vector2
 	var rest_forward: float
@@ -36,11 +29,10 @@ var legs: Array[LegData] = []
 
 # ===================== 触角数据 =====================
 class AntennaData extends RefCounted:
-	var base: IKChain
-	var segments: Array[IKChain] = []
-	var tip: IKChain
-	var tip_target: Node2D
-	var ik_chain: IKChain
+	var base: JointBone
+	var segments: Array[JointBone] = []
+	var tip: JointBone
+	var ik_controller: IKController
 	var side: float
 
 var antennae: Array[AntennaData] = []
@@ -60,22 +52,8 @@ var _next_gait_group: int = 0
 
 
 func _ready() -> void:
-	_resolve_spine_references()
 	_init_legs()
 	_init_antennae()
-
-
-func _resolve_spine_references() -> void:
-	if head_anchor_path:
-		head_anchor = get_node(head_anchor_path) as ChainJoint
-	if head_path:
-		head = get_node(head_path) as ChainJoint
-	if thorax_path:
-		thorax = get_node(thorax_path) as ChainJoint
-	if petiole_path:
-		petiole = get_node(petiole_path) as ChainJoint
-	if abdomen_first_path:
-		abdomen_first = get_node(abdomen_first_path) as ChainJoint
 
 
 func _process(delta: float) -> void:
@@ -92,12 +70,12 @@ func _init_legs() -> void:
 	var leg_configs: Array = [
 		# [路径, 附着关节, 髋部偏移, 静止前向, 静止侧向, 步态组]
 		# 三角步态：A组=FL+MR+BL，B组=FR+ML+BR
-		["IKRoot/LegFL", thorax, Vector2(5, -8), 10.0, -18.0, 0],
-		["IKRoot/LegFR", thorax, Vector2(5, 8), 10.0, 18.0, 1],
-		["IKRoot/LegML", thorax, Vector2(-2, -10), 0.0, -20.0, 1],
-		["IKRoot/LegMR", thorax, Vector2(-2, 10), 0.0, 20.0, 0],
-		["IKRoot/LegBL", petiole, Vector2(-8, -8), -10.0, -18.0, 0],
-		["IKRoot/LegBR", petiole, Vector2(-8, 8), -10.0, 18.0, 1],
+		[$"Spine/Thorax/LegFL", thorax, Vector2(5, -8), 10.0, -18.0, 0],
+		[$"Spine/Thorax/LegFR", thorax, Vector2(5, 8), 10.0, 18.0, 1],
+		[$"Spine/Thorax/LegML", thorax, Vector2(-2, -10), 0.0, -20.0, 1],
+		[$"Spine/Thorax/LegMR", thorax, Vector2(-2, 10), 0.0, 20.0, 0],
+		[$"Spine/Thorax/LegBL", petiole, Vector2(-8, -8), -10.0, -18.0, 0],
+		[$"Spine/Thorax/LegBR", petiole, Vector2(-8, 8), -10.0, 18.0, 1],
 	]
 
 	for config: Array in leg_configs:
@@ -110,18 +88,17 @@ func _init_legs() -> void:
 		leg_data.stepping = false
 		leg_data.step_progress = 0.0
 
-		var leg_root: Node = get_node(config[0] as String)
-		leg_data.hip = leg_root.get_node("Hip") as IKChain
-		leg_data.knee = leg_root.get_node("Hip/Knee") as IKChain
-		leg_data.foot = leg_root.get_node("Hip/Knee/Foot") as IKChain
+		var leg_root: Node = config[0]
+		leg_data.hip = leg_root.get_node("Hip") as JointBone
+		leg_data.knee = leg_root.get_node("Hip/Knee") as JointBone
+		leg_data.foot = leg_root.get_node("Hip/Knee/Foot") as JointBone
 		var leg_name: String = leg_root.name
-		leg_data.foot_target = get_node("IKTargets/" + leg_name + "Target") as Node2D
-		leg_data.ik_chain = leg_root as IKChain
+		leg_data.ik_controller = get_node("IKTargets/" + leg_name + "Target") as IKController
 
 		# 初始化脚部目标到静止位置
 		var init_right: Vector2 = body_forward.rotated(PI * 0.5)
 		var init_rest: Vector2 = leg_data.hip.global_position + body_forward * leg_data.rest_forward + init_right * leg_data.rest_side
-		leg_data.foot_target.global_position = init_rest
+		leg_data.ik_controller.global_position = init_rest
 
 		legs.append(leg_data)
 
@@ -130,23 +107,22 @@ func _init_legs() -> void:
 
 func _init_antennae() -> void:
 	var antenna_configs: Array = [
-		["AntennaIKRoot/AntennaL", -1.0],
-		["AntennaIKRoot/AntennaR", 1.0],
+		[$"Spine/Head/AntennaL", -1.0],
+		[$"Spine/Head/AntennaR", 1.0],
 	]
 
 	for config: Array in antenna_configs:
 		var antenna_data: AntennaData = AntennaData.new()
 		antenna_data.side = config[1] as float
 
-		var antenna_root: Node = get_node(config[0] as String)
-		antenna_data.base = antenna_root.get_node("Base") as IKChain
-		antenna_data.segments.append(antenna_root.get_node("Base/Seg1") as IKChain)
-		antenna_data.segments.append(antenna_root.get_node("Base/Seg1/Seg2") as IKChain)
-		antenna_data.segments.append(antenna_root.get_node("Base/Seg1/Seg2/Seg3") as IKChain)
-		antenna_data.tip = antenna_root.get_node("Base/Seg1/Seg2/Seg3/Tip") as IKChain
+		var antenna_root: Node = config[0]
+		antenna_data.base = antenna_root.get_node("Base") as JointBone
+		antenna_data.segments.append(antenna_root.get_node("Base/Seg1") as JointBone)
+		antenna_data.segments.append(antenna_root.get_node("Base/Seg1/Seg2") as JointBone)
+		antenna_data.segments.append(antenna_root.get_node("Base/Seg1/Seg2/Seg3") as JointBone)
+		antenna_data.tip = antenna_root.get_node("Base/Seg1/Seg2/Seg3/Tip") as JointBone
 		var antenna_name: String = antenna_root.name
-		antenna_data.tip_target = get_node("IKTargets/" + antenna_name + "Target") as Node2D
-		antenna_data.ik_chain = antenna_root as IKChain
+		antenna_data.ik_controller = get_node("IKTargets/" + antenna_name + "Target") as IKController
 
 		antennae.append(antenna_data)
 
@@ -248,30 +224,33 @@ func _update_single_leg(leg_data: LegData, delta: float, body_right: Vector2, fo
 
 		# 落点在迈步开始时已锁定，不再每帧跟随身体，避免"腿追着身体走"
 		var step_pos: Vector2 = lerp(leg_data.step_start, leg_data.step_end, progress)
-		leg_data.foot_target.global_position = step_pos + body_right * side_sign * arc_height
+		leg_data.ik_controller.global_position = step_pos + body_right * side_sign * arc_height
 
 		if leg_data.step_progress >= 1.0:
 			leg_data.stepping = false
-			leg_data.foot_target.global_position = leg_data.step_end
+			leg_data.ik_controller.global_position = leg_data.step_end
 	else:
 		# 支撑相：脚完全固定在地面，绝对不移动
 		# 计算脚相对髋部的实际偏移与理想偏移的误差
 		var desired_offset: Vector2 = body_forward * leg_data.rest_forward + body_right * leg_data.rest_side
-		var actual_offset: Vector2 = leg_data.foot_target.global_position - leg_data.hip.global_position
+		var actual_offset: Vector2 = leg_data.ik_controller.global_position - leg_data.hip.global_position
 		var offset_error: Vector2 = actual_offset - desired_offset
 		leg_data.error_distance = offset_error.length()
 
 		# 误差过大时触发迈步（无论方向——前进、后退、转向都能触发）
 		var step_threshold: float = 10.0
+		# 紧急阈值：旋转/快速移动时误差可能迅速累积，此时即使另一组在迈步也强制触发
+		var emergency_threshold: float = 25.0
 		var other_group_stepping: bool = group_b_stepping if leg_data.gait_group == 0 else group_a_stepping
 
 		# 触发条件：误差过大，或被步态节奏强制触发（保证后腿也规律迈步）
 		var error_trigger: bool = leg_data.error_distance > step_threshold
 		var rhythm_trigger: bool = force_group == leg_data.gait_group
-		if (error_trigger or rhythm_trigger) and not other_group_stepping:
+		var emergency_trigger: bool = leg_data.error_distance > emergency_threshold
+		if (emergency_trigger) or ((error_trigger or rhythm_trigger) and not other_group_stepping):
 			leg_data.stepping = true
 			leg_data.step_progress = 0.0
-			leg_data.step_start = leg_data.foot_target.global_position
+			leg_data.step_start = leg_data.ik_controller.global_position
 			# 预测落点：沿身体速度方向前移一段，让脚迈到身体"将要到达"的位置
 			# 这样身体是追上脚，而不是脚追身体
 			var step_speed: float = 14.0 + minf(leg_data.error_distance, 30.0) * 0.5
@@ -309,4 +288,4 @@ func _update_antenna_targets(delta: float) -> void:
 		var side_dist: float = side * 6.0 + sway_primary + sway_secondary
 
 		var target_position: Vector2 = base_position + body_forward * forward_dist + body_right * side_dist + body_forward.rotated(PI * 0.5).rotated(PI * 0.5) * bob
-		antenna_data.tip_target.global_position = target_position
+		antenna_data.ik_controller.global_position = target_position
