@@ -1,19 +1,9 @@
 [gd_scene format=3 uid="uid://d0s724g2qy3an"]
 
-[ext_resource type="PackedScene" uid="uid://oq18w3yhli6p" path="res://creatures/ant/ant.tscn" id="1_ant"]
-[ext_resource type="PackedScene" uid="uid://cv2k4m7bspid" path="res://creatures/spider/spider.tscn" id="2_spider"]
-[ext_resource type="PackedScene" uid="uid://b3k7m8n9milli" path="res://creatures/millipede/millipede.tscn" id="3_millipede"]
+[ext_resource type="Script" uid="uid://ccyu8o71g22wd" path="res://main.gd" id="1_ig7tw"]
 
 [node name="Main" type="Node2D" unique_id=288582561]
-
-[node name="Ant" parent="." unique_id=1732059478 instance=ExtResource("1_ant")]
-position = Vector2(0, -150)
-
-[node name="Spider" parent="." unique_id=400000001 instance=ExtResource("2_spider")]
-position = Vector2(0, 0)
-
-[node name="Millipede" parent="." unique_id=400000002 instance=ExtResource("3_millipede")]
-position = Vector2(0, 150)
+script = ExtResource("1_ig7tw")
 
 [node name="CanvasLayer" type="CanvasLayer" parent="." unique_id=1547414883]
 layer = -1
@@ -25,3 +15,6 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 color = Color(0.34906504, 0.34906504, 0.34906498, 1)
+
+[node name="Camera2D" type="Camera2D" parent="." unique_id=1087423426]
+zoom = Vector2(0.5, 0.5)

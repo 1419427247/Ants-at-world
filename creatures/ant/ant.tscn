@@ -5,20 +5,27 @@
 [ext_resource type="Script" uid="uid://dv8j2npqfpqsd" path="res://creatures/ant/AntRenderer.gd" id="3_renderer"]
 [ext_resource type="Script" uid="uid://cicoqpywylsrp" path="res://core/joint_bone.gd" id="4_jointbone"]
 [ext_resource type="Script" uid="uid://c8tf8n1o8s3qt" path="res://core/ik_controller.gd" id="5_ikcontroller"]
+[ext_resource type="Script" uid="uid://i4u88l5iuhy8" path="res://creatures/creature_root.gd" id="6_root"]
 
-[node name="Ant" type="Node2D" unique_id=786302651 node_paths=PackedStringArray("head_anchor", "head", "thorax", "petiole", "abdomen_first")]
+[node name="Ant" type="Node2D" unique_id=1074984556]
+script = ExtResource("6_root")
+
+[node name="Controller" type="Node2D" parent="." unique_id=2028989577 node_paths=PackedStringArray("head", "thorax", "petiole", "abdomen_first", "head_anchor")]
 script = ExtResource("2_controller")
-head_anchor = NodePath("Spine/HeadAnchor")
-head = NodePath("Spine/Head")
-thorax = NodePath("Spine/Thorax")
-petiole = NodePath("Spine/Petiole")
-abdomen_first = NodePath("Spine/Abdomen1")
+head = NodePath("../Spine/Head")
+thorax = NodePath("../Spine/Thorax")
+petiole = NodePath("../Spine/Petiole")
+abdomen_first = NodePath("../Spine/Abdomen1")
+head_anchor = NodePath("../Spine/HeadAnchor")
+
+[node name="RemoteTransform2D" type="RemoteTransform2D" parent="Controller" unique_id=1772244778]
+remote_path = NodePath("../../Spine/HeadAnchor")
 
 [node name="Spine" type="Node2D" parent="." unique_id=1024632402]
+metadata/_edit_lock_ = true
 
 [node name="HeadAnchor" type="Node2D" parent="Spine" unique_id=888000001]
 top_level = true
-position = Vector2(34, 0)
 script = ExtResource("1_chain")
 minimum_distance = 5.0
 maximum_distance = 15.0
@@ -29,7 +36,7 @@ metadata/_custom_type_script = "uid://0uek6ffmend7"
 
 [node name="Head" type="Node2D" parent="Spine" unique_id=700535667]
 top_level = true
-position = Vector2(20, 0)
+position = Vector2(-14, 0)
 script = ExtResource("1_chain")
 radius = 9.0
 maximum_distance = 0.0
@@ -46,30 +53,30 @@ minimum_angle_degrees = -10.0
 maximum_angle_degrees = 50.0
 
 [node name="Seg1" type="Node2D" parent="Spine/Head/AntennaL/Base" unique_id=1469659122]
-position = Vector2(8.006603, -3.145451)
+position = Vector2(8.004463, -3.1446104)
 script = ExtResource("4_jointbone")
-length = 8.6023
+length = 8.6
 minimum_angle_degrees = -10.0
 maximum_angle_degrees = 60.0
 
 [node name="Seg2" type="Node2D" parent="Spine/Head/AntennaL/Base/Seg1" unique_id=1214942986]
-position = Vector2(6.243667, -2.4528694)
+position = Vector2(6.2453423, -2.4535275)
 script = ExtResource("4_jointbone")
-length = 6.7082
+length = 6.71
 minimum_angle_degrees = -10.0
 maximum_angle_degrees = 60.0
 
 [node name="Seg3" type="Node2D" parent="Spine/Head/AntennaL/Base/Seg1/Seg2" unique_id=800850457]
-position = Vector2(5.012283, -1.9691111)
+position = Vector2(5.0167503, -1.9708661)
 script = ExtResource("4_jointbone")
-length = 5.3852
+length = 5.39
 minimum_angle_degrees = -10.0
 maximum_angle_degrees = 50.0
 
 [node name="Tip" type="Node2D" parent="Spine/Head/AntennaL/Base/Seg1/Seg2/Seg3" unique_id=982786769]
-position = Vector2(3.8375812, -1.5076215)
+position = Vector2(3.8346958, -1.506488)
 script = ExtResource("4_jointbone")
-length = 4.1231
+length = 4.12
 minimum_angle_degrees = -10.0
 maximum_angle_degrees = 30.0
 
@@ -82,36 +89,36 @@ minimum_angle_degrees = -50.0
 maximum_angle_degrees = 10.0
 
 [node name="Seg1" type="Node2D" parent="Spine/Head/AntennaR/Base" unique_id=1047168582]
-position = Vector2(8.006603, 3.145451)
+position = Vector2(8.004463, 3.1446104)
 script = ExtResource("4_jointbone")
-length = 8.6023
+length = 8.6
 minimum_angle_degrees = -60.0
 maximum_angle_degrees = 10.0
 
 [node name="Seg2" type="Node2D" parent="Spine/Head/AntennaR/Base/Seg1" unique_id=718531975]
-position = Vector2(6.243667, 2.4528694)
+position = Vector2(6.2453423, 2.4535275)
 script = ExtResource("4_jointbone")
-length = 6.7082
+length = 6.71
 minimum_angle_degrees = -60.0
 maximum_angle_degrees = 10.0
 
 [node name="Seg3" type="Node2D" parent="Spine/Head/AntennaR/Base/Seg1/Seg2" unique_id=1582687189]
-position = Vector2(5.012283, 1.9691111)
+position = Vector2(5.0167503, 1.9708661)
 script = ExtResource("4_jointbone")
-length = 5.3852
+length = 5.39
 minimum_angle_degrees = -50.0
 maximum_angle_degrees = 10.0
 
 [node name="Tip" type="Node2D" parent="Spine/Head/AntennaR/Base/Seg1/Seg2/Seg3" unique_id=773377731]
-position = Vector2(3.8375812, 1.5076215)
+position = Vector2(3.8346958, 1.506488)
 script = ExtResource("4_jointbone")
-length = 4.1231
+length = 4.12
 minimum_angle_degrees = -30.0
 maximum_angle_degrees = 10.0
 
 [node name="Thorax" type="Node2D" parent="Spine" unique_id=733739574]
 top_level = true
-position = Vector2(-6.2584877e-07, -7.788287e-06)
+position = Vector2(-34, -3.019914e-06)
 script = ExtResource("1_chain")
 radius = 11.0
 maximum_distance = 0.0
@@ -126,16 +133,18 @@ position = Vector2(8, -8)
 script = ExtResource("4_jointbone")
 
 [node name="Knee" type="Node2D" parent="Spine/Thorax/LegFL/Hip" unique_id=914982496]
-position = Vector2(11.669607, -12.642072)
+position = Vector2(11.66642, -12.638618)
 script = ExtResource("4_jointbone")
-length = 17.2047
-minimum_angle_degrees = -5.0
+length = 17.2
+minimum_angle_degrees = -60.0
 maximum_angle_degrees = 90.0
 
 [node name="Foot" type="Node2D" parent="Spine/Thorax/LegFL/Hip/Knee" unique_id=1745109664]
-position = Vector2(9.782293, -10.597481)
+position = Vector2(3.2605011, -14.046549)
 script = ExtResource("4_jointbone")
-length = 14.4222
+length = 14.42
+minimum_angle_degrees = -120.0
+maximum_angle_degrees = -30.0
 
 [node name="LegFR" type="Node2D" parent="Spine/Thorax" unique_id=11680786]
 
@@ -144,16 +153,18 @@ position = Vector2(8, 8)
 script = ExtResource("4_jointbone")
 
 [node name="Knee" type="Node2D" parent="Spine/Thorax/LegFR/Hip" unique_id=1879355067]
-position = Vector2(11.669603, 12.642076)
+position = Vector2(11.666415, 12.638621)
 script = ExtResource("4_jointbone")
-length = 17.2047
+length = 17.2
 minimum_angle_degrees = -90.0
-maximum_angle_degrees = 5.0
+maximum_angle_degrees = 60.0
 
 [node name="Foot" type="Node2D" parent="Spine/Thorax/LegFR/Hip/Knee" unique_id=1657627195]
-position = Vector2(9.78229, 10.597483)
+position = Vector2(2.4809203, 14.204979)
 script = ExtResource("4_jointbone")
-length = 14.4222
+length = 14.42
+minimum_angle_degrees = 30.0
+maximum_angle_degrees = 120.0
 
 [node name="LegML" type="Node2D" parent="Spine/Thorax" unique_id=125851143]
 
@@ -162,16 +173,18 @@ position = Vector2(-2, -10)
 script = ExtResource("4_jointbone")
 
 [node name="Knee" type="Node2D" parent="Spine/Thorax/LegML/Hip" unique_id=1440501822]
-position = Vector2(-2.945183, -16.01016)
+position = Vector2(-2.9454005, -16.011341)
 script = ExtResource("4_jointbone")
-length = 16.2788
-minimum_angle_degrees = -5.0
+length = 16.28
+minimum_angle_degrees = -60.0
 maximum_angle_degrees = 90.0
 
 [node name="Foot" type="Node2D" parent="Spine/Thorax/LegML/Hip/Knee" unique_id=1664730197]
-position = Vector2(3.8851273, -13.59797)
+position = Vector2(3.8845503, -13.595951)
 script = ExtResource("4_jointbone")
-length = 14.1421
+length = 14.14
+minimum_angle_degrees = -120.0
+maximum_angle_degrees = -30.0
 
 [node name="LegMR" type="Node2D" parent="Spine/Thorax" unique_id=1393723562]
 
@@ -180,16 +193,18 @@ position = Vector2(-2, 10)
 script = ExtResource("4_jointbone")
 
 [node name="Knee" type="Node2D" parent="Spine/Thorax/LegMR/Hip" unique_id=538059165]
-position = Vector2(-2.9451811, 16.01016)
+position = Vector2(-2.9453983, 16.011341)
 script = ExtResource("4_jointbone")
-length = 16.2788
+length = 16.28
 minimum_angle_degrees = -90.0
-maximum_angle_degrees = 5.0
+maximum_angle_degrees = 60.0
 
 [node name="Foot" type="Node2D" parent="Spine/Thorax/LegMR/Hip/Knee" unique_id=2113540173]
-position = Vector2(3.885124, 13.597971)
+position = Vector2(3.8845475, 13.595952)
 script = ExtResource("4_jointbone")
-length = 14.1421
+length = 14.14
+minimum_angle_degrees = 30.0
+maximum_angle_degrees = 120.0
 
 [node name="LegBL" type="Node2D" parent="Spine/Thorax" unique_id=878359466]
 
@@ -198,16 +213,18 @@ position = Vector2(-16, -8)
 script = ExtResource("4_jointbone")
 
 [node name="Knee" type="Node2D" parent="Spine/Thorax/LegBL/Hip" unique_id=2122920158]
-position = Vector2(-6.7493386, -15.570732)
+position = Vector2(-6.7490997, -15.570181)
 script = ExtResource("4_jointbone")
-length = 16.9706
-minimum_angle_degrees = 40.0
+length = 16.97
+minimum_angle_degrees = -40.0
 maximum_angle_degrees = 150.0
 
 [node name="Foot" type="Node2D" parent="Spine/Thorax/LegBL/Hip/Knee" unique_id=2144712576]
-position = Vector2(-14.003929, -1.9720508)
+position = Vector2(-14.001849, -1.9717579)
 script = ExtResource("4_jointbone")
-length = 14.1421
+length = 14.14
+minimum_angle_degrees = -120.0
+maximum_angle_degrees = -30.0
 
 [node name="LegBR" type="Node2D" parent="Spine/Thorax" unique_id=1558448621]
 
@@ -216,20 +233,22 @@ position = Vector2(-16, 8)
 script = ExtResource("4_jointbone")
 
 [node name="Knee" type="Node2D" parent="Spine/Thorax/LegBR/Hip" unique_id=1784771295]
-position = Vector2(-6.7493386, 15.570732)
+position = Vector2(-6.7490997, 15.570181)
 script = ExtResource("4_jointbone")
-length = 16.9706
+length = 16.97
 minimum_angle_degrees = -150.0
-maximum_angle_degrees = -40.0
+maximum_angle_degrees = 40.0
 
 [node name="Foot" type="Node2D" parent="Spine/Thorax/LegBR/Hip/Knee" unique_id=1431308515]
-position = Vector2(-12.71378, 6.193448)
+position = Vector2(-12.711892, 6.1925282)
 script = ExtResource("4_jointbone")
-length = 14.1421
+length = 14.14
+minimum_angle_degrees = 30.0
+maximum_angle_degrees = 120.0
 
 [node name="Petiole" type="Node2D" parent="Spine" unique_id=1161915424]
 top_level = true
-position = Vector2(-16, -1.557657e-06)
+position = Vector2(-50, -6.0397883e-07)
 script = ExtResource("1_chain")
 maximum_distance = 0.0
 minimum_angle_degrees = -15.0
@@ -238,7 +257,7 @@ metadata/_custom_type_script = "uid://0uek6ffmend7"
 
 [node name="Abdomen1" type="Node2D" parent="Spine" unique_id=1938898655]
 top_level = true
-position = Vector2(-34, 1.160268e-06)
+position = Vector2(-68, 2.1139376e-06)
 script = ExtResource("1_chain")
 radius = 13.0
 maximum_distance = 0.0
@@ -250,62 +269,59 @@ metadata/_custom_type_script = "uid://0uek6ffmend7"
 
 [node name="LegFLTarget" type="Node2D" parent="IKTargets" unique_id=2108615092 node_paths=PackedStringArray("joint_bones")]
 top_level = true
-position = Vector2(26, -34)
+position = Vector2(-4, -34)
 script = ExtResource("5_ikcontroller")
 joint_bones = [NodePath("../../Spine/Thorax/LegFL/Hip/Knee"), NodePath("../../Spine/Thorax/LegFL/Hip/Knee/Foot")]
 lerp_speed = 32.0
 
 [node name="LegFRTarget" type="Node2D" parent="IKTargets" unique_id=1286646396 node_paths=PackedStringArray("joint_bones")]
 top_level = true
-position = Vector2(30, 31)
+position = Vector2(0, 31)
 script = ExtResource("5_ikcontroller")
 joint_bones = [NodePath("../../Spine/Thorax/LegFR/Hip/Knee"), NodePath("../../Spine/Thorax/LegFR/Hip/Knee/Foot")]
 lerp_speed = 32.0
 
 [node name="LegMLTarget" type="Node2D" parent="IKTargets" unique_id=333505720 node_paths=PackedStringArray("joint_bones")]
 top_level = true
-position = Vector2(-7, -40)
+position = Vector2(-37, -40)
 script = ExtResource("5_ikcontroller")
 joint_bones = [NodePath("../../Spine/Thorax/LegML/Hip/Knee"), NodePath("../../Spine/Thorax/LegML/Hip/Knee/Foot")]
 lerp_speed = 32.0
 
 [node name="LegMRTarget" type="Node2D" parent="IKTargets" unique_id=864764014 node_paths=PackedStringArray("joint_bones")]
 top_level = true
-position = Vector2(-1, 40)
+position = Vector2(-31, 40)
 script = ExtResource("5_ikcontroller")
 joint_bones = [NodePath("../../Spine/Thorax/LegMR/Hip/Knee"), NodePath("../../Spine/Thorax/LegMR/Hip/Knee/Foot")]
 lerp_speed = 32.0
 
 [node name="LegBLTarget" type="Node2D" parent="IKTargets" unique_id=1895868316 node_paths=PackedStringArray("joint_bones")]
 top_level = true
-position = Vector2(-37, -26)
+position = Vector2(-67, -26)
 script = ExtResource("5_ikcontroller")
 joint_bones = [NodePath("../../Spine/Thorax/LegBL/Hip/Knee"), NodePath("../../Spine/Thorax/LegBL/Hip/Knee/Foot")]
 lerp_speed = 32.0
 
 [node name="LegBRTarget" type="Node2D" parent="IKTargets" unique_id=692372001 node_paths=PackedStringArray("joint_bones")]
 top_level = true
-position = Vector2(-35, 30)
+position = Vector2(-65, 30)
 script = ExtResource("5_ikcontroller")
 joint_bones = [NodePath("../../Spine/Thorax/LegBR/Hip/Knee"), NodePath("../../Spine/Thorax/LegBR/Hip/Knee/Foot")]
 lerp_speed = 32.0
 
 [node name="AntennaLTarget" type="Node2D" parent="IKTargets" unique_id=2089427446 node_paths=PackedStringArray("joint_bones")]
 top_level = true
-position = Vector2(48, -15)
+position = Vector2(18, -15)
 script = ExtResource("5_ikcontroller")
 joint_bones = [NodePath("../../Spine/Head/AntennaL/Base/Seg1"), NodePath("../../Spine/Head/AntennaL/Base/Seg1/Seg2"), NodePath("../../Spine/Head/AntennaL/Base/Seg1/Seg2/Seg3"), NodePath("../../Spine/Head/AntennaL/Base/Seg1/Seg2/Seg3/Tip")]
 lerp_speed = 32.0
 
 [node name="AntennaRTarget" type="Node2D" parent="IKTargets" unique_id=425200065 node_paths=PackedStringArray("joint_bones")]
 top_level = true
-position = Vector2(48, 15)
+position = Vector2(18, 15)
 script = ExtResource("5_ikcontroller")
 joint_bones = [NodePath("../../Spine/Head/AntennaR/Base/Seg1"), NodePath("../../Spine/Head/AntennaR/Base/Seg1/Seg2"), NodePath("../../Spine/Head/AntennaR/Base/Seg1/Seg2/Seg3"), NodePath("../../Spine/Head/AntennaR/Base/Seg1/Seg2/Seg3/Tip")]
 lerp_speed = 32.0
 
-[node name="AntRenderer" type="Node2D" parent="." unique_id=1102421566]
+[node name="Renderer" type="Node2D" parent="." unique_id=1102421566]
 script = ExtResource("3_renderer")
-
-[node name="Camera2D" type="Camera2D" parent="." unique_id=1640481304]
-zoom = Vector2(0.58, 0.58)

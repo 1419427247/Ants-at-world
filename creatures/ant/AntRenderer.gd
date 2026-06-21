@@ -14,7 +14,7 @@ var shadow_color: Color = Color(0.0, 0.0, 0.0, 0.12)
 
 
 func _ready() -> void:
-	controller = get_parent() as AntController
+	controller = get_parent().get_node("Controller") as AntController
 
 
 func _process(_delta: float) -> void:

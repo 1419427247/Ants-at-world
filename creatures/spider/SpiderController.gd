@@ -1,4 +1,4 @@
-class_name SpiderController extends Node2D
+class_name SpiderController extends CreatureController
 ## 蜘蛛控制器 — 基于交替四足步态（Alternating Tetrapod Gait）
 ##
 ## 生物力学参考：
@@ -10,7 +10,6 @@ class_name SpiderController extends Node2D
 ## - 摆动相轨迹为贝塞尔弧线，向外侧+前方抬起
 
 # ===================== 脊柱关节 =====================
-@export var head_anchor: ChainJoint
 @export var cephalothorax: ChainJoint
 @export var abdomen: ChainJoint
 
@@ -36,25 +35,21 @@ class LegData extends RefCounted:
 var legs: Array[LegData] = []
 
 # ===================== 运动状态 =====================
-var move_speed: float = 100.0
-var body_forward: Vector2 = Vector2.RIGHT
-var _smoothed_forward: Vector2 = Vector2.RIGHT
-var _body_velocity: Vector2 = Vector2.ZERO
-var _last_head_anchor_pos: Vector2 = Vector2.ZERO
-var _velocity_initialized: bool = false
 
 # ===================== 步态参数 =====================
 var _gait_phase: float = 0.0          # 全局步态相位 [0, 1)
 var _duty_factor: float = 0.68         # 占空比：蜘蛛典型值~0.68
-var _stride_length: float = 35.0       # 步幅长度（像素）
+var _stride_length: float = 0.0        # 步幅长度（像素），在 _init_legs 中自动计算
+var _reference_leg_length: float = 0.0 # 参考腿长，基于实际骨骼长度计算
 
 
 func _ready() -> void:
 	_init_legs()
+	_velocity_lerp_rate = 14.0
 
 
 func _process(delta: float) -> void:
-	_update_head_movement(delta)
+	_update_body_direction(delta)
 	_update_hip_positions()
 	_update_gait(delta)
 
@@ -68,15 +63,15 @@ func _init_legs() -> void:
 	# 后腿偏移最大（先进入摆动窗），前腿偏移最小
 	var leg_configs: Array = [
 		# A组 — 在全局相位~0.68进入摆动相
-		[$"Spine/Cephalothorax/Leg1L", cephalothorax, Vector2(12, -12), 14.0, -28.0, 0.03],
-		[$"Spine/Cephalothorax/Leg2R", cephalothorax, Vector2(4, 14), 4.0, 30.0, 0.00],
-		[$"Spine/Cephalothorax/Leg3L", cephalothorax, Vector2(-4, -14), -4.0, -30.0, 0.06],
-		[$"Spine/Cephalothorax/Leg4R", cephalothorax, Vector2(-12, 12), -14.0, 28.0, 0.09],
+		[$"../Spine/Cephalothorax/Leg1L", cephalothorax, Vector2(12, -12), 14.0, -28.0, 0.03],
+		[$"../Spine/Cephalothorax/Leg2R", cephalothorax, Vector2(4, 14), 4.0, 30.0, 0.00],
+		[$"../Spine/Cephalothorax/Leg3L", cephalothorax, Vector2(-4, -14), -4.0, -30.0, 0.06],
+		[$"../Spine/Cephalothorax/Leg4R", cephalothorax, Vector2(-12, 12), -14.0, 28.0, 0.09],
 		# B组 — 在全局相位~0.18进入摆动相
-		[$"Spine/Cephalothorax/Leg1R", cephalothorax, Vector2(12, 12), 14.0, 28.0, 0.53],
-		[$"Spine/Cephalothorax/Leg2L", cephalothorax, Vector2(4, -14), 4.0, -30.0, 0.50],
-		[$"Spine/Cephalothorax/Leg3R", cephalothorax, Vector2(-4, 14), -4.0, 30.0, 0.56],
-		[$"Spine/Cephalothorax/Leg4L", cephalothorax, Vector2(-12, -12), -14.0, -28.0, 0.59],
+		[$"../Spine/Cephalothorax/Leg1R", cephalothorax, Vector2(12, 12), 14.0, 28.0, 0.53],
+		[$"../Spine/Cephalothorax/Leg2L", cephalothorax, Vector2(4, -14), 4.0, -30.0, 0.50],
+		[$"../Spine/Cephalothorax/Leg3R", cephalothorax, Vector2(-4, 14), -4.0, 30.0, 0.56],
+		[$"../Spine/Cephalothorax/Leg4L", cephalothorax, Vector2(-12, -12), -14.0, -28.0, 0.59],
 	]
 
 	for config: Array in leg_configs:
@@ -95,7 +90,7 @@ func _init_legs() -> void:
 		leg_data.knee = leg_root.get_node("Hip/Knee") as JointBone
 		leg_data.foot = leg_root.get_node("Hip/Knee/Foot") as JointBone
 		var leg_name: String = leg_root.name
-		leg_data.ik_controller = get_node("IKTargets/" + leg_name + "Target") as IKController
+		leg_data.ik_controller = get_node("../IKTargets/" + leg_name + "Target") as IKController
 
 		# 初始化脚部目标到静止位置
 		var init_right: Vector2 = body_forward.rotated(PI * 0.5)
@@ -104,25 +99,17 @@ func _init_legs() -> void:
 
 		legs.append(leg_data)
 
+	# 计算参考骨骼长度（所有腿的平均总长）
+	var total_len: float = 0.0
+	for leg_data_calc: LegData in legs:
+		total_len += leg_data_calc.knee.length + leg_data_calc.foot.length
+	_reference_leg_length = total_len / legs.size()
+	_stride_length = _reference_leg_length * 0.74
 
-# ===================== 头部移动 =====================
 
-func _update_head_movement(delta: float) -> void:
-	var mouse_position: Vector2 = get_global_mouse_position()
-	var direction: Vector2 = mouse_position - head_anchor.global_position
-	var distance: float = direction.length()
+# ===================== 身体朝向 =====================
 
-	if distance > 1.0:
-		var move_distance: float = minf(distance, move_speed * delta)
-		head_anchor.global_position += direction.normalized() * move_distance
-
-	# 估算身体速度
-	if _velocity_initialized and delta > 0.0:
-		var instant_velocity: Vector2 = (head_anchor.global_position - _last_head_anchor_pos) / delta
-		_body_velocity = _body_velocity.lerp(instant_velocity, minf(1.0, delta * 14.0))
-	_last_head_anchor_pos = head_anchor.global_position
-	_velocity_initialized = true
-
+func _update_body_direction(delta: float) -> void:
 	# 更新身体朝向
 	var spine_dir: Vector2 = Vector2.ZERO
 	if cephalothorax and abdomen:
@@ -131,6 +118,8 @@ func _update_head_movement(delta: float) -> void:
 		var target_forward: Vector2 = spine_dir.normalized()
 		_smoothed_forward = _smoothed_forward.lerp(target_forward, delta * 12.0).normalized()
 		body_forward = _smoothed_forward
+
+	_update_velocity_estimation(delta)
 
 
 # ===================== 髋部定位 =====================
@@ -182,11 +171,11 @@ func _update_single_leg(leg_data: LegData, delta: float, body_right: Vector2, bo
 		var in_swing_window: bool = local_phase >= _duty_factor
 		var rhythm_trigger: bool = in_swing_window and body_speed > 2.0 and leg_data.stance_time > 0.1
 
-		# 误差驱动：误差过大时触发
-		var error_trigger: bool = leg_data.error_distance > 20.0
+		# 误差驱动：误差过大时触发（需冷却避免连续触发，阈值高于正常支撑相最大误差~24px）
+		var error_trigger: bool = leg_data.error_distance > _reference_leg_length * 0.6 and leg_data.stance_time > 0.2
 
 		# 紧急触发：误差极大时强制迈步
-		var emergency_trigger: bool = leg_data.error_distance > 32.0
+		var emergency_trigger: bool = leg_data.error_distance > _reference_leg_length * 0.85 and leg_data.stance_time > 0.05
 
 		if emergency_trigger or rhythm_trigger or error_trigger:
 			_start_step(leg_data, rest_position, body_right, body_speed)
@@ -199,14 +188,14 @@ func _start_step(leg_data: LegData, rest_position: Vector2, body_right: Vector2,
 	leg_data.step_start = leg_data.ik_controller.global_position
 
 	# 预测落点：沿身体速度方向前移
-	var step_speed: float = 16.0 + body_speed * 0.12
-	var step_duration: float = 1.0 / maxf(step_speed, 1.0)
+	var step_speed: float = maxf(body_speed * 0.1, _reference_leg_length * 0.085)
+	var step_duration: float = 1.0 / step_speed
 	var predicted_move: Vector2 = _body_velocity * step_duration
 	leg_data.step_end = rest_position + predicted_move
 
 	# 贝塞尔曲线控制点：向外侧+前方抬起
 	var side_sign: float = 1.0 if leg_data.rest_side > 0 else -1.0
-	var lift_height: float = 14.0 + minf(body_speed * 0.08, 8.0)
+	var lift_height: float = _reference_leg_length * 0.3 + minf(body_speed * 0.08, _reference_leg_length * 0.17)
 	# 抬起方向：偏向外侧 + 偏向前方
 	var lift_dir: Vector2 = (body_right * side_sign * 0.6 + body_forward * 0.4).normalized()
 	leg_data.step_mid = (leg_data.step_start + leg_data.step_end) * 0.5 + lift_dir * lift_height
@@ -214,9 +203,11 @@ func _start_step(leg_data: LegData, rest_position: Vector2, body_right: Vector2,
 
 func _update_swing(leg_data: LegData, delta: float, body_speed: float) -> void:
 	# 摆动相：贝塞尔曲线弧线
-	var step_speed: float = 16.0 + body_speed * 0.12
+	var step_speed: float = maxf(body_speed * 0.1, _reference_leg_length * 0.085)
 	leg_data.step_progress = minf(1.0, leg_data.step_progress + delta * step_speed)
-	var t: float = leg_data.step_progress
+
+	# 缓动曲线：ease-in-out，起步和落地更柔和
+	var t: float = 0.5 - 0.5 * cos(leg_data.step_progress * PI)
 
 	# 二次贝塞尔曲线: B(t) = (1-t)²P0 + 2(1-t)tP1 + t²P2
 	var u: float = 1.0 - t

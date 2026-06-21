@@ -1,11 +1,11 @@
-class_name AntController extends CreatureController
-## 蚂蚁控制器 — 引用场景中的 JointBone 节点，处理移动和步态
+class_name BeetleController extends CreatureController
+## 金龟子控制器 — 6腿IK + 三角步态，参考蚂蚁架构
+## 特点：宽体、硬翅鞘、棒状触角、慢速稳健步态
 
 # ===================== 脊柱关节 =====================
 @export var head: ChainJoint
 @export var thorax: ChainJoint
-@export var petiole: ChainJoint
-@export var abdomen_first: ChainJoint
+@export var elytra: ChainJoint
 
 # ===================== 腿部数据 =====================
 class LegData extends RefCounted:
@@ -21,8 +21,10 @@ class LegData extends RefCounted:
 	var stepping: bool
 	var step_progress: float
 	var step_start: Vector2
+	var step_mid: Vector2
 	var step_end: Vector2
 	var error_distance: float
+	var stance_time: float
 
 var legs: Array[LegData] = []
 
@@ -37,9 +39,12 @@ class AntennaData extends RefCounted:
 var antennae: Array[AntennaData] = []
 
 # ===================== 运动状态 =====================
-var _reference_leg_length: float = 0.0
+var group_a_stepping: bool = false
+var group_b_stepping: bool = false
+var _stride_accumulator: float = 0.0
 var _stride_length: float = 0.0
-var _phase: float = 0.0  # [0,1): 0→B摆A撑, 0.5→A摆B撑
+var _next_gait_group: int = 0
+var _reference_leg_length: float = 0.0
 
 
 func _ready() -> void:
@@ -58,16 +63,15 @@ func _process(delta: float) -> void:
 # ===================== 初始化腿部 =====================
 
 func _init_legs() -> void:
-	# 腿部配置: [路径, 附着关节, 附着偏移, 静止前向, 静止侧向, 步态组]
+	# 金龟子腿配置：宽 stance，前腿短粗（挖掘），后腿长
+	# 三角步态：A组=FL+MR+BL，B组=FR+ML+BR
 	var leg_configs: Array = [
-		# [路径, 附着关节, 髋部偏移, 静止前向, 静止侧向, 步态组]
-		# 三角步态：A组=FL+MR+BL，B组=FR+ML+BR
-		[$"../Spine/Thorax/LegFL", thorax, Vector2(5, -8), 10.0, -18.0, 0],
-		[$"../Spine/Thorax/LegFR", thorax, Vector2(5, 8), 10.0, 18.0, 1],
-		[$"../Spine/Thorax/LegML", thorax, Vector2(-2, -10), 0.0, -20.0, 1],
-		[$"../Spine/Thorax/LegMR", thorax, Vector2(-2, 10), 0.0, 20.0, 0],
-		[$"../Spine/Thorax/LegBL", petiole, Vector2(-8, -8), -10.0, -18.0, 0],
-		[$"../Spine/Thorax/LegBR", petiole, Vector2(-8, 8), -10.0, 18.0, 1],
+		[$"../Spine/Thorax/LegFL", thorax, Vector2(6, -10), 12.0, -22.0, 0],
+		[$"../Spine/Thorax/LegFR", thorax, Vector2(6, 10), 12.0, 22.0, 1],
+		[$"../Spine/Thorax/LegML", thorax, Vector2(-2, -12), 0.0, -24.0, 1],
+		[$"../Spine/Thorax/LegMR", thorax, Vector2(-2, 12), 0.0, 24.0, 0],
+		[$"../Spine/Thorax/LegBL", elytra, Vector2(-10, -10), -12.0, -22.0, 0],
+		[$"../Spine/Thorax/LegBR", elytra, Vector2(-10, 10), -12.0, 22.0, 1],
 	]
 
 	for config: Array in leg_configs:
@@ -94,17 +98,18 @@ func _init_legs() -> void:
 
 		legs.append(leg_data)
 
-	# 计算参考骨骼长度（所有腿的平均总长）
+	# 计算参考骨骼长度
 	var total_len: float = 0.0
 	for leg_data: LegData in legs:
 		total_len += leg_data.knee.length + leg_data.foot.length
 	_reference_leg_length = total_len / legs.size()
-	_stride_length = _reference_leg_length * 0.52
+	_stride_length = _reference_leg_length * 0.74
 
 
 # ===================== 初始化触角 =====================
 
 func _init_antennae() -> void:
+	# 金龟子棒状触角：3段，末端膨大
 	var antenna_configs: Array = [
 		[$"../Spine/Head/AntennaL", -1.0],
 		[$"../Spine/Head/AntennaR", 1.0],
@@ -118,8 +123,7 @@ func _init_antennae() -> void:
 		antenna_data.base = antenna_root.get_node("Base") as JointBone
 		antenna_data.segments.append(antenna_root.get_node("Base/Seg1") as JointBone)
 		antenna_data.segments.append(antenna_root.get_node("Base/Seg1/Seg2") as JointBone)
-		antenna_data.segments.append(antenna_root.get_node("Base/Seg1/Seg2/Seg3") as JointBone)
-		antenna_data.tip = antenna_root.get_node("Base/Seg1/Seg2/Seg3/Tip") as JointBone
+		antenna_data.tip = antenna_root.get_node("Base/Seg1/Seg2/Tip") as JointBone
 		var antenna_name: String = antenna_root.name
 		antenna_data.ik_controller = get_node("../IKTargets/" + antenna_name + "Target") as IKController
 
@@ -129,14 +133,14 @@ func _init_antennae() -> void:
 # ===================== 身体朝向 =====================
 
 func _update_body_direction(delta: float) -> void:
-	# 更新身体朝向：用脊柱平均方向，并平滑过渡
+	# 更新身体朝向：用脊柱平均方向
 	var spine_dir: Vector2 = Vector2.ZERO
 	var spine_count: int = 0
 	if head and thorax:
 		spine_dir += head.global_position - thorax.global_position
 		spine_count += 1
-	if thorax and petiole:
-		spine_dir += thorax.global_position - petiole.global_position
+	if thorax and elytra:
+		spine_dir += thorax.global_position - elytra.global_position
 		spine_count += 1
 	if spine_count > 0:
 		spine_dir /= spine_count
@@ -154,57 +158,91 @@ func _update_hip_positions() -> void:
 	var body_right: Vector2 = body_forward.rotated(PI * 0.5)
 	for leg_data: LegData in legs:
 		var attachment: ChainJoint = leg_data.body_attachment
-		# 髋部偏移使用身体局部坐标（x=前向, y=侧向），随身体朝向旋转
 		var hip_forward: float = leg_data.attach_offset.x
 		var hip_side: float = leg_data.attach_offset.y
 		leg_data.hip.global_position = attachment.global_position + body_forward * hip_forward + body_right * hip_side
 
 
-# ===================== 步态算法（严格交替三足步态） =====================
-# 两组严格交替：A组(FL+MR+BL)摆动时B组(FR+ML+BR)支撑，反之亦然
-# 相位驱动：(0→A摆B撑, 0.5→B摆A撑)，不前馈、不纠错、不重叠
+# ===================== 步态算法（三角步态 + 贝塞尔弧线） =====================
+# 参考蚂蚁三角步态 + 蜘蛛贝塞尔弧线
 
 func _update_gait(delta: float) -> void:
 	var body_right: Vector2 = body_forward.rotated(PI * 0.5)
-	var speed: float = _body_velocity.length()
+	var body_speed: float = _body_velocity.length()
 
-	# 按身体位移推进步态相位
-	if speed > 0.5:
-		_phase = fmod(_phase + speed * delta / _stride_length, 1.0)
+	_stride_accumulator += body_speed * delta
 
-	var a_swing: bool = _phase >= 0.5
+	group_a_stepping = false
+	group_b_stepping = false
 	for leg_data: LegData in legs:
-		_update_single_leg(leg_data, delta, body_right, speed, a_swing)
+		if leg_data.stepping:
+			if leg_data.gait_group == 0:
+				group_a_stepping = true
+			else:
+				group_b_stepping = true
+
+	var force_group: int = -1
+	if not group_a_stepping and not group_b_stepping and _stride_accumulator >= _stride_length:
+		_stride_accumulator -= _stride_length
+		force_group = _next_gait_group
+		_next_gait_group = 1 if _next_gait_group == 0 else 0
+
+	for leg_data: LegData in legs:
+		_update_single_leg(leg_data, delta, body_right, body_speed, force_group)
 
 
-func _update_single_leg(leg_data: LegData, delta: float, body_right: Vector2, speed: float, a_swing: bool) -> void:
-	var in_a: bool = leg_data.gait_group == 0
-	var should_swing: bool = in_a == a_swing
+func _update_single_leg(leg_data: LegData, delta: float, body_right: Vector2, body_speed: float, force_group: int) -> void:
 	var rest_position: Vector2 = leg_data.hip.global_position + body_forward * leg_data.rest_forward + body_right * leg_data.rest_side
 
-	if should_swing and not leg_data.stepping:
-		# 相位切换 → 本组所有腿同步进入摆动
-		leg_data.stepping = true
-		leg_data.step_progress = 0.0
-		leg_data.step_start = leg_data.ik_controller.global_position
-		# 预测落点：身体后半步幅将要到达的位置
-		var step_duration: float = _stride_length * 0.5 / maxf(speed, 0.1)
-		leg_data.step_end = rest_position + _body_velocity * step_duration
-
 	if leg_data.stepping:
-		# 摆动相：弧线迈步
-		var swing_rate: float = maxf(2.0 * speed / _stride_length, 1.0)
-		leg_data.step_progress = minf(1.0, leg_data.step_progress + delta * swing_rate)
-		var t: float = 0.5 - 0.5 * cos(leg_data.step_progress * PI)
-		var side_sign: float = 1.0 if leg_data.rest_side > 0 else -1.0
-		var arc: float = sin(leg_data.step_progress * PI) * _reference_leg_length * 0.26
-		var pos: Vector2 = leg_data.step_start.lerp(leg_data.step_end, t) + body_right * side_sign * arc
+		# 摆动相：贝塞尔曲线弧线
+		var step_speed: float = 16.0 + minf(leg_data.error_distance, 30.0) * 0.4 + body_speed * 0.1
+		leg_data.step_progress = minf(1.0, leg_data.step_progress + delta * step_speed)
+		var t: float = 0.5 - 0.5 * cos(leg_data.step_progress * PI)  # ease-in-out
+
+		var u: float = 1.0 - t
+		var pos: Vector2 = leg_data.step_start * (u * u) + leg_data.step_mid * (2 * u * t) + leg_data.step_end * (t * t)
 		leg_data.ik_controller.global_position = pos
 
 		if leg_data.step_progress >= 1.0:
 			leg_data.stepping = false
 			leg_data.ik_controller.global_position = leg_data.step_end
-	# 支撑相：脚钉在地面不动（ik_controller.global_position 保持不变）
+	else:
+		# 支撑相
+		leg_data.stance_time += delta
+
+		var desired_offset: Vector2 = body_forward * leg_data.rest_forward + body_right * leg_data.rest_side
+		var actual_offset: Vector2 = leg_data.ik_controller.global_position - leg_data.hip.global_position
+		var offset_error: Vector2 = actual_offset - desired_offset
+		leg_data.error_distance = offset_error.length()
+
+		var step_threshold: float = _reference_leg_length * 0.42
+		var emergency_threshold: float = _reference_leg_length * 1.16
+		var other_group_stepping: bool = group_b_stepping if leg_data.gait_group == 0 else group_a_stepping
+
+		var error_trigger: bool = leg_data.error_distance > step_threshold and leg_data.stance_time > 0.15
+		var rhythm_trigger: bool = force_group == leg_data.gait_group
+		var emergency_trigger: bool = leg_data.error_distance > emergency_threshold and leg_data.stance_time > 0.05
+		if (emergency_trigger) or ((error_trigger or rhythm_trigger) and not other_group_stepping):
+			_start_step(leg_data, rest_position, body_right, body_speed)
+
+
+func _start_step(leg_data: LegData, rest_position: Vector2, body_right: Vector2, body_speed: float) -> void:
+	leg_data.stepping = true
+	leg_data.step_progress = 0.0
+	leg_data.stance_time = 0.0
+	leg_data.step_start = leg_data.ik_controller.global_position
+
+	var step_speed: float = 16.0 + minf(leg_data.error_distance, 30.0) * 0.4 + body_speed * 0.1
+	var step_duration: float = 1.0 / maxf(step_speed, 1.0)
+	var predicted_move: Vector2 = _body_velocity * step_duration
+	leg_data.step_end = rest_position + predicted_move
+
+	# 贝塞尔控制点：向外侧+前方抬起，高度随速度增加
+	var side_sign: float = 1.0 if leg_data.rest_side > 0 else -1.0
+	var lift_height: float = _reference_leg_length * 0.63 + minf(body_speed * 0.1, _reference_leg_length * 0.32)
+	var lift_dir: Vector2 = (body_right * side_sign * 0.7 + body_forward * 0.3).normalized()
+	leg_data.step_mid = (leg_data.step_start + leg_data.step_end) * 0.5 + lift_dir * lift_height
 
 
 # ===================== 触角目标 =====================
@@ -219,17 +257,13 @@ func _update_antenna_targets(delta: float) -> void:
 		var base_offset: Vector2 = body_forward * head.radius * 0.5 + body_right * side * head.radius * 0.6
 		antenna_data.base.global_position = head.global_position + base_offset
 
-		# 触角尖端目标：向前外方伸展，带自然摆动
+		# 棒状触角：较短，末端膨大，摆动幅度小
 		var base_position: Vector2 = antenna_data.base.global_position
-		# 主摆动（慢速大幅）
-		var sway_primary: float = sin(time * 2.0 + side * PI * 0.5) * 5.0
-		# 次摆动（快速小幅，模拟触觉探测）
-		var sway_secondary: float = sin(time * 5.0 + side * PI) * 2.0
-		# 垂直微抖动
-		var bob: float = sin(time * 4.0 + side * 0.7) * 1.5
+		var sway_primary: float = sin(time * 1.5 + side * PI * 0.5) * 3.0
+		var sway_secondary: float = sin(time * 4.0 + side * PI) * 1.0
 
-		var forward_dist: float = _reference_leg_length * 0.71
-		var side_dist: float = side * 6.0 + sway_primary + sway_secondary
+		var forward_dist: float = 16.0
+		var side_dist: float = side * 4.0 + sway_primary + sway_secondary
 
-		var target_position: Vector2 = base_position + body_forward * forward_dist + body_right * side_dist + body_forward.rotated(PI * 0.5).rotated(PI * 0.5) * bob
+		var target_position: Vector2 = base_position + body_forward * forward_dist + body_right * side_dist
 		antenna_data.ik_controller.global_position = target_position

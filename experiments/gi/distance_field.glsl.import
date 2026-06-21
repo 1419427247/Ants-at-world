@@ -1,0 +1,14 @@
+[remap]
+
+importer="glsl"
+type="RDShaderFile"
+uid="uid://0tpfsmkx1l1"
+path="res://.godot/imported/distance_field.glsl-2ed8ad7fc7bb44edc5f125448261cc48.res"
+
+[deps]
+
+source_file="res://experiments/gi/distance_field.glsl"
+dest_files=["res://.godot/imported/distance_field.glsl-2ed8ad7fc7bb44edc5f125448261cc48.res"]
+
+[params]
+

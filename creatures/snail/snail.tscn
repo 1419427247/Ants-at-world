@@ -1,0 +1,205 @@
+[gd_scene format=3 uid="uid://c6m08te3vdo66"]
+
+[ext_resource type="Script" uid="uid://0uek6ffmend7" path="res://core/chain_joint.gd" id="1_chain"]
+[ext_resource type="Script" uid="uid://bf51o3183cyud" path="res://creatures/snail/SnailController.gd" id="2_controller"]
+[ext_resource type="Script" uid="uid://b2xdxfo8282as" path="res://creatures/snail/SnailRenderer.gd" id="3_renderer"]
+[ext_resource type="Script" uid="uid://cicoqpywylsrp" path="res://core/joint_bone.gd" id="4_jointbone"]
+[ext_resource type="Script" uid="uid://c8tf8n1o8s3qt" path="res://core/ik_controller.gd" id="5_ikcontroller"]
+[ext_resource type="Script" path="res://creatures/creature_root.gd" id="6_root"]
+
+[node name="Snail" type="Node2D" unique_id=1616691529]
+script = ExtResource("6_root")
+
+[node name="Controller" type="Node2D" parent="." node_paths=PackedStringArray("head_anchor", "head", "body", "shell")]
+script = ExtResource("2_controller")
+head_anchor = NodePath("../Spine/HeadAnchor")
+head = NodePath("../Spine/Head")
+body = NodePath("../Spine/Body")
+shell = NodePath("../Spine/Shell")
+
+[node name="RemoteTransform2D" type="RemoteTransform2D" parent="Controller" unique_id=577378333]
+remote_path = NodePath("../../Spine/HeadAnchor")
+
+[node name="Spine" type="Node2D" parent="." unique_id=200000002]
+
+[node name="HeadAnchor" type="Node2D" parent="Spine" unique_id=200000003]
+top_level = true
+script = ExtResource("1_chain")
+minimum_distance = 15.0
+maximum_distance = 45.0
+minimum_angle_degrees = -180.0
+maximum_angle_degrees = 180.0
+anchored = true
+metadata/_custom_type_script = "uid://0uek6ffmend7"
+
+[node name="Head" type="Node2D" parent="Spine" unique_id=200000004]
+top_level = true
+position = Vector2(-39, 8.2e-06)
+script = ExtResource("1_chain")
+radius = 24.0
+minimum_distance = -18.0
+maximum_distance = 9.0
+minimum_angle_degrees = -45.0
+maximum_angle_degrees = 45.0
+metadata/_custom_type_script = "uid://0uek6ffmend7"
+
+[node name="TentacleLL" type="Node2D" parent="Spine/Head" unique_id=200000005]
+
+[node name="Base" type="Node2D" parent="Spine/Head/TentacleLL" unique_id=200000006]
+position = Vector2(12, -9)
+script = ExtResource("4_jointbone")
+minimum_angle_degrees = -20.0
+maximum_angle_degrees = 60.0
+
+[node name="Seg1" type="Node2D" parent="Spine/Head/TentacleLL/Base" unique_id=200000007]
+position = Vector2(21.0, -9.0)
+script = ExtResource("4_jointbone")
+length = 22.8
+minimum_angle_degrees = -15.0
+maximum_angle_degrees = 60.0
+
+[node name="Seg2" type="Node2D" parent="Spine/Head/TentacleLL/Base/Seg1" unique_id=200000008]
+position = Vector2(15.0, -6.0)
+script = ExtResource("4_jointbone")
+length = 16.2
+minimum_angle_degrees = -10.0
+maximum_angle_degrees = 50.0
+
+[node name="Tip" type="Node2D" parent="Spine/Head/TentacleLL/Base/Seg1/Seg2" unique_id=200000009]
+position = Vector2(12.0, -3.0)
+script = ExtResource("4_jointbone")
+length = 12.4
+minimum_angle_degrees = -10.0
+maximum_angle_degrees = 30.0
+
+[node name="TentacleLR" type="Node2D" parent="Spine/Head" unique_id=200000010]
+
+[node name="Base" type="Node2D" parent="Spine/Head/TentacleLR" unique_id=200000011]
+position = Vector2(9, -15)
+script = ExtResource("4_jointbone")
+minimum_angle_degrees = -20.0
+maximum_angle_degrees = 60.0
+
+[node name="Seg1" type="Node2D" parent="Spine/Head/TentacleLR/Base" unique_id=200000012]
+position = Vector2(9.0, -6.0)
+script = ExtResource("4_jointbone")
+length = 10.8
+minimum_angle_degrees = -15.0
+maximum_angle_degrees = 50.0
+
+[node name="Tip" type="Node2D" parent="Spine/Head/TentacleLR/Base/Seg1" unique_id=200000013]
+position = Vector2(6.0, -3.0)
+script = ExtResource("4_jointbone")
+length = 6.7
+minimum_angle_degrees = -10.0
+maximum_angle_degrees = 30.0
+
+[node name="TentacleRL" type="Node2D" parent="Spine/Head" unique_id=200000014]
+
+[node name="Base" type="Node2D" parent="Spine/Head/TentacleRL" unique_id=200000015]
+position = Vector2(9, 15)
+script = ExtResource("4_jointbone")
+minimum_angle_degrees = -60.0
+maximum_angle_degrees = 20.0
+
+[node name="Seg1" type="Node2D" parent="Spine/Head/TentacleRL/Base" unique_id=200000016]
+position = Vector2(9.0, 6.0)
+script = ExtResource("4_jointbone")
+length = 10.8
+minimum_angle_degrees = -50.0
+maximum_angle_degrees = 15.0
+
+[node name="Tip" type="Node2D" parent="Spine/Head/TentacleRL/Base/Seg1" unique_id=200000017]
+position = Vector2(6.0, 3.0)
+script = ExtResource("4_jointbone")
+length = 6.7
+minimum_angle_degrees = -30.0
+maximum_angle_degrees = 10.0
+
+[node name="TentacleRR" type="Node2D" parent="Spine/Head" unique_id=200000018]
+
+[node name="Base" type="Node2D" parent="Spine/Head/TentacleRR" unique_id=200000019]
+position = Vector2(12, 9)
+script = ExtResource("4_jointbone")
+minimum_angle_degrees = -60.0
+maximum_angle_degrees = 20.0
+
+[node name="Seg1" type="Node2D" parent="Spine/Head/TentacleRR/Base" unique_id=200000020]
+position = Vector2(21.0, 9.0)
+script = ExtResource("4_jointbone")
+length = 22.8
+minimum_angle_degrees = -60.0
+maximum_angle_degrees = 15.0
+
+[node name="Seg2" type="Node2D" parent="Spine/Head/TentacleRR/Base/Seg1" unique_id=200000021]
+position = Vector2(15.0, 6.0)
+script = ExtResource("4_jointbone")
+length = 16.2
+minimum_angle_degrees = -50.0
+maximum_angle_degrees = 10.0
+
+[node name="Tip" type="Node2D" parent="Spine/Head/TentacleRR/Base/Seg1/Seg2" unique_id=200000022]
+position = Vector2(12.0, 3.0)
+script = ExtResource("4_jointbone")
+length = 12.4
+minimum_angle_degrees = -30.0
+maximum_angle_degrees = 10.0
+
+[node name="Body" type="Node2D" parent="Spine" unique_id=200000023]
+top_level = true
+position = Vector2(-93, 0)
+script = ExtResource("1_chain")
+radius = 30.0
+minimum_distance = -24.0
+maximum_distance = 9.0
+minimum_angle_degrees = -25.0
+maximum_angle_degrees = 25.0
+metadata/_custom_type_script = "uid://0uek6ffmend7"
+
+[node name="Shell" type="Node2D" parent="Spine" unique_id=200000024]
+top_level = true
+position = Vector2(-159, 9.9e-06)
+script = ExtResource("1_chain")
+radius = 36.0
+minimum_distance = -30.0
+maximum_distance = 12.0
+minimum_angle_degrees = -20.0
+maximum_angle_degrees = 20.0
+metadata/_custom_type_script = "uid://0uek6ffmend7"
+
+[node name="IKTargets" type="Node2D" parent="." unique_id=200000025]
+
+[node name="TentacleLLTarget" type="Node2D" parent="IKTargets" unique_id=200000026 node_paths=PackedStringArray("joint_bones")]
+top_level = true
+position = Vector2(42, -36)
+script = ExtResource("5_ikcontroller")
+iterations = 1
+joint_bones = [NodePath("../../Spine/Head/TentacleLL/Base/Seg1"), NodePath("../../Spine/Head/TentacleLL/Base/Seg1/Seg2"), NodePath("../../Spine/Head/TentacleLL/Base/Seg1/Seg2/Tip")]
+lerp_speed = 30.0
+
+[node name="TentacleLRTarget" type="Node2D" parent="IKTargets" unique_id=200000027 node_paths=PackedStringArray("joint_bones")]
+top_level = true
+position = Vector2(-6, -30)
+script = ExtResource("5_ikcontroller")
+iterations = 1
+joint_bones = [NodePath("../../Spine/Head/TentacleLR/Base/Seg1"), NodePath("../../Spine/Head/TentacleLR/Base/Seg1/Tip")]
+lerp_speed = 30.0
+
+[node name="TentacleRLTarget" type="Node2D" parent="IKTargets" unique_id=200000028 node_paths=PackedStringArray("joint_bones")]
+top_level = true
+position = Vector2(-6, 30)
+script = ExtResource("5_ikcontroller")
+iterations = 1
+joint_bones = [NodePath("../../Spine/Head/TentacleRL/Base/Seg1"), NodePath("../../Spine/Head/TentacleRL/Base/Seg1/Tip")]
+lerp_speed = 30.0
+
+[node name="TentacleRRTarget" type="Node2D" parent="IKTargets" unique_id=200000029 node_paths=PackedStringArray("joint_bones")]
+top_level = true
+position = Vector2(42, 36)
+script = ExtResource("5_ikcontroller")
+iterations = 1
+joint_bones = [NodePath("../../Spine/Head/TentacleRR/Base/Seg1"), NodePath("../../Spine/Head/TentacleRR/Base/Seg1/Seg2"), NodePath("../../Spine/Head/TentacleRR/Base/Seg1/Seg2/Tip")]
+lerp_speed = 30.0
+
+[node name="Renderer" type="Node2D" parent="." unique_id=200000030]
+script = ExtResource("3_renderer")

@@ -1,37 +1,71 @@
 [gd_scene format=3 uid="uid://cxcivnaue76sc"]
 
-[ext_resource type="Script" uid="uid://cicoqpywylsrp" path="res://core/joint_bone.gd" id="1_37kl0"]
-[ext_resource type="Script" uid="uid://c8tf8n1o8s3qt" path="res://core/ik_controller.gd" id="2_8uh7m"]
+[ext_resource type="Script" uid="uid://cfod5lkfekesc" path="res://test.gd" id="1_8uh7m"]
+[ext_resource type="Script" uid="uid://0uek6ffmend7" path="res://core/chain_joint.gd" id="2_6uqi0"]
+[ext_resource type="Texture2D" uid="uid://ctou42dhffeyl" path="res://assets/circle.png" id="3_6uqi0"]
 
 [node name="Test" type="Node2D" unique_id=1810328392]
-
-[node name="JointBone" type="Node2D" parent="." unique_id=1936344992]
-script = ExtResource("1_37kl0")
-
-[node name="JointBone" type="Node2D" parent="JointBone" unique_id=1205200321]
-position = Vector2(15.454814, -4.1411047)
-script = ExtResource("1_37kl0")
-minimum_angle_degrees = -90.0
-maximum_angle_degrees = -15.0
-
-[node name="JointBone" type="Node2D" parent="JointBone/JointBone" unique_id=1778049039]
-position = Vector2(11.62878, 10.989607)
-rotation = -11.058002
-script = ExtResource("1_37kl0")
-minimum_angle_degrees = 45.0
-
-[node name="JointBone" type="Node2D" parent="JointBone/JointBone/JointBone" unique_id=201285473]
-position = Vector2(11.693688, -10.920515)
-rotation = 6.112555
-script = ExtResource("1_37kl0")
-minimum_angle_degrees = -90.0
-maximum_angle_degrees = 0.0
-
-[node name="IKController" type="Node2D" parent="." unique_id=1442856072 node_paths=PackedStringArray("joint_bones")]
-position = Vector2(41, 20)
-script = ExtResource("2_8uh7m")
-joint_bones = [NodePath("../JointBone/JointBone"), NodePath("../JointBone/JointBone/JointBone"), NodePath("../JointBone/JointBone/JointBone/JointBone")]
-is_running_in_editor = true
-metadata/_custom_type_script = "uid://c8tf8n1o8s3qt"
+script = ExtResource("1_8uh7m")
 
 [node name="Camera2D" type="Camera2D" parent="." unique_id=203749129]
+
+[node name="ChainJoint" type="Node2D" parent="." unique_id=953409611]
+top_level = true
+script = ExtResource("2_6uqi0")
+metadata/_custom_type_script = "uid://0uek6ffmend7"
+
+[node name="ChainJoint2" type="Node2D" parent="." unique_id=1849103893]
+top_level = true
+position = Vector2(-10, 0)
+script = ExtResource("2_6uqi0")
+metadata/_custom_type_script = "uid://0uek6ffmend7"
+
+[node name="ChainJoint3" type="Node2D" parent="." unique_id=1013824000]
+top_level = true
+position = Vector2(-20, -8.742278e-07)
+script = ExtResource("2_6uqi0")
+metadata/_custom_type_script = "uid://0uek6ffmend7"
+
+[node name="ChainJoint4" type="Node2D" parent="." unique_id=1555656971]
+top_level = true
+position = Vector2(-30, -2.3841858e-06)
+script = ExtResource("2_6uqi0")
+metadata/_custom_type_script = "uid://0uek6ffmend7"
+
+[node name="IKTargets" type="Node2D" parent="." unique_id=190046425]
+
+[node name="FootFL" type="Sprite2D" parent="IKTargets" unique_id=1001]
+z_index = 10
+position = Vector2(0, -17)
+scale = Vector2(0.15, 0.15)
+texture = ExtResource("3_6uqi0")
+
+[node name="FootFR" type="Sprite2D" parent="IKTargets" unique_id=1002]
+z_index = 10
+position = Vector2(0, 18)
+scale = Vector2(0.15, 0.15)
+texture = ExtResource("3_6uqi0")
+
+[node name="FootML" type="Sprite2D" parent="IKTargets" unique_id=1003]
+z_index = 10
+position = Vector2(-18, -18)
+scale = Vector2(0.15, 0.15)
+texture = ExtResource("3_6uqi0")
+
+[node name="FootMR" type="Sprite2D" parent="IKTargets" unique_id=1004]
+z_index = 10
+position = Vector2(-17, 18)
+scale = Vector2(0.15, 0.15)
+texture = ExtResource("3_6uqi0")
+
+[node name="FootBL" type="Sprite2D" parent="IKTargets" unique_id=1005]
+z_index = 10
+position = Vector2(-34, -18)
+scale = Vector2(0.15, 0.15)
+texture = ExtResource("3_6uqi0")
+
+[node name="FootBR" type="Sprite2D" parent="IKTargets" unique_id=1006]
+z_index = 10
+position = Vector2(-35, 17)
+scale = Vector2(0.15, 0.15)
+texture = ExtResource("3_6uqi0")

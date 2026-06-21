@@ -10,7 +10,6 @@ class_name JointBone extends Node2D
 ## 骨骼长度（仅在父节点为 JointBone 时可用）
 @export var length: float = 16:
 	get:
-		var parent_bone: JointBone = get_parent_bone()
 		if parent_bone:
 			return length
 		return 0.0
@@ -30,22 +29,29 @@ class_name JointBone extends Node2D
 ## 是否从关节根部旋转骨骼（而不是从骨骼末端旋转）
 @export var rotate_from_joint: bool
 
+var parent: Node2D:
+	get:
+		if not parent:
+			parent = get_parent()
+		return parent
+
+var parent_bone: JointBone:
+	get:
+		if not parent_bone:
+			parent_bone = get_parent() as JointBone
+		return parent_bone
+
 func _init() -> void:
 	set_notify_transform(true)
 
+func _process(delta: float) -> void:
+	queue_redraw()
+	if parent_bone:
+		position = position.normalized() * length
+
 func _notification(what: int) -> void:
-	if what == NOTIFICATION_TRANSFORM_CHANGED:
-		queue_redraw()
-		## 确保与父骨骼的距离不超过 length
-		var parent_bone: JointBone = get_parent_bone()
-		if parent_bone:
-			position = position.normalized() * length
-
-	elif what == NOTIFICATION_PARENTED or what == NOTIFICATION_UNPARENTED:
+	if what == NOTIFICATION_PARENTED or what == NOTIFICATION_UNPARENTED:
 		notify_property_list_changed()
-
-
-
 
 func _validate_property(property: Dictionary) -> void:
 	if property.name == "length" and not (get_parent() is JointBone):
@@ -58,26 +64,9 @@ func get_tip_position() -> Vector2:
 
 ## 获取关节根部在世界空间中的位置（即父 JointBone 的全局位置）
 func get_joint_position() -> Vector2:
-	var parent_bone: JointBone = get_parent_bone()
 	if parent_bone:
 		return parent_bone.global_position
 	return global_position
-
-
-## 获取父级 JointBone（如果父节点是 JointBone）
-func get_parent_bone() -> JointBone:
-	var p: Node = get_parent()
-	return p as JointBone
-
-
-## 获取所有子级 JointBone
-func get_child_bones() -> Array[JointBone]:
-	var bones: Array[JointBone] = []
-	for child: Node in get_children():
-		if child is JointBone:
-			bones.append(child)
-	return bones
-
 
 func _draw() -> void:
 	if not Engine.is_editor_hint():
@@ -89,7 +78,6 @@ func _draw() -> void:
 	var allowed_color: Color = Color(0.3, 1.0, 0.5, 0.5)
 
 	# 将父节点位置转换到本骨骼的局部空间
-	var parent_bone: JointBone = get_parent_bone()
 	if parent_bone:
 		var joint_local: Vector2 = to_local(parent_bone.global_position)
 		# 骨骼段：从关节（父位置）到末端（本节点原点）
@@ -107,13 +95,12 @@ func _draw() -> void:
 
 
 func _draw_constraint_arcs(restricted_color: Color, allowed_color: Color) -> void:
-	var parent_bone: JointBone = get_parent_bone()
 	if not parent_bone:
 		return
 
 	# 父骨骼关节位置（世界空间）
 	var parent_joint_pos: Vector2
-	var grandparent_bone := parent_bone.get_parent_bone()
+	var grandparent_bone := parent_bone.parent_bone
 	if grandparent_bone:
 		parent_joint_pos = grandparent_bone.global_position
 	else:

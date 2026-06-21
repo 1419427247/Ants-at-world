@@ -1,0 +1,81 @@
+[gd_scene format=3 uid="uid://dhx7nt7kgpna6"]
+
+[ext_resource type="Script" uid="uid://bmv0osrlxtu5s" path="res://experiments/viewport_uv.gd" id="1_ujrg2"]
+
+[node name="ViewportUV" type="Node" unique_id=188091031]
+script = ExtResource("1_ujrg2")
+
+[node name="SourceViewport" type="SubViewport" parent="." unique_id=1049031573]
+transparent_bg = true
+size = Vector2i(1152, 648)
+render_target_update_mode = 4
+
+[node name="Content" type="Node2D" parent="SourceViewport" unique_id=295820066]
+scale = Vector2(2, 2)
+
+[node name="RectRed" type="ColorRect" parent="SourceViewport/Content" unique_id=1598191727]
+offset_left = 50.0
+offset_top = 50.0
+offset_right = 170.0
+offset_bottom = 170.0
+color = Color(1, 0, 0, 1)
+
+[node name="RectGreen" type="ColorRect" parent="SourceViewport/Content" unique_id=1517978104]
+offset_left = 320.0
+offset_top = 50.0
+offset_right = 440.0
+offset_bottom = 170.0
+color = Color(0, 1, 0, 1)
+
+[node name="RectBlue" type="ColorRect" parent="SourceViewport/Content" unique_id=2130463082]
+offset_left = 180.0
+offset_top = 180.0
+offset_right = 300.0
+offset_bottom = 300.0
+color = Color(0, 0, 1, 1)
+
+[node name="RectYellow" type="ColorRect" parent="SourceViewport/Content" unique_id=38963677]
+offset_left = 50.0
+offset_top = 320.0
+offset_right = 170.0
+offset_bottom = 440.0
+color = Color(1, 1, 0, 1)
+
+[node name="RectCyan" type="ColorRect" parent="SourceViewport/Content" unique_id=1315825008]
+offset_left = 320.0
+offset_top = 320.0
+offset_right = 440.0
+offset_bottom = 440.0
+color = Color(0, 1, 1, 1)
+
+[node name="RectPurple" type="ColorRect" parent="SourceViewport/Content" unique_id=165960253]
+offset_left = 180.0
+offset_top = 90.0
+offset_right = 260.0
+offset_bottom = 130.0
+color = Color(1, 0, 1, 1)
+
+[node name="RectWhite" type="ColorRect" parent="SourceViewport/Content" unique_id=1025636462]
+offset_left = 180.0
+offset_top = 140.0
+offset_right = 260.0
+offset_bottom = 170.0
+
+[node name="Label" type="Label" parent="SourceViewport/Content" unique_id=1504652944]
+offset_left = 50.0
+offset_top = 180.0
+offset_right = 550.0
+offset_bottom = 210.0
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 2
+text = "Source Viewport (透明背景)"
+
+[node name="TextureRect" type="TextureRect" parent="." unique_id=576655580]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+expand_mode = 1

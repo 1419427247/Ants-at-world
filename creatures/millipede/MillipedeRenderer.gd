@@ -12,12 +12,12 @@ var eye_color: Color = Color(0.02, 0.02, 0.02, 1.0)
 var shadow_color: Color = Color(0.0, 0.0, 0.0, 0.12)
 
 # 体节尺寸
-var seg_half_w: float = 3.5   # 体节长方形半宽（沿身体方向）
-var seg_half_h: float = 4.0   # 体节长方形半高（垂直身体方向）
+var seg_half_w: float = 7.0   # 体节长方形半宽（沿身体方向）
+var seg_half_h: float = 7.0   # 体节长方形半高（垂直身体方向）
 
 
 func _ready() -> void:
-	controller = get_parent() as MillipedeController
+	controller = get_parent().get_node("Controller") as MillipedeController
 
 
 func _process(_delta: float) -> void:
@@ -46,7 +46,7 @@ func _draw_shadow() -> void:
 	if controller.head:
 		joints.append(controller.head)
 	for joint: ChainJoint in joints:
-		var local_pos: Vector2 = to_local(joint.global_position) + Vector2(1.5, 2.5)
+		var local_pos: Vector2 = to_local(joint.global_position) + Vector2(3.0, 5.0)
 		draw_rect(Rect2(local_pos.x - seg_half_w, local_pos.y - seg_half_h, seg_half_w * 2, seg_half_h * 2), shadow_color)
 
 
@@ -134,13 +134,13 @@ func _draw_legs() -> void:
 
 		# 脚部阴影（仅支撑相）
 		if not leg_data.stepping:
-			draw_circle(foot_local + Vector2(1, 1.5), 1.5, shadow_color)
+			draw_circle(foot_local + Vector2(2, 3), 3.0, shadow_color)
 
 		# 腿部线段
 		draw_line(hip_local, foot_local, leg_color, 1.5)
 
 		# 脚部小点
-		draw_circle(foot_local, 0.8, leg_color)
+		draw_circle(foot_local, 1.6, leg_color)
 
 
 # ===================== 头部细节 =====================
@@ -155,14 +155,14 @@ func _draw_head_details() -> void:
 
 	# 眼睛（定位在头部半圆内部）
 	# 半圆中心在 head_local - head_dir * seg_half_h，半径 seg_half_h
-	var eye_offset_forward: float = -1.0  # 从head关节往回偏移，落在半圆内
-	var eye_offset_side: float = 1.8
-	var eye_radius: float = 1.0
+	var eye_offset_forward: float = -2.0  # 从head关节往回偏移，落在半圆内
+	var eye_offset_side: float = 3.6
+	var eye_radius: float = 2.0
 
 	var left_eye: Vector2 = head_local + head_dir * eye_offset_forward + head_right * eye_offset_side
 	var right_eye: Vector2 = head_local + head_dir * eye_offset_forward - head_right * eye_offset_side
 
-	draw_circle(left_eye, eye_radius + 0.3, Color(0.3, 0.2, 0.15))
-	draw_circle(right_eye, eye_radius + 0.3, Color(0.3, 0.2, 0.15))
+	draw_circle(left_eye, eye_radius + 0.6, Color(0.3, 0.2, 0.15))
+	draw_circle(right_eye, eye_radius + 0.6, Color(0.3, 0.2, 0.15))
 	draw_circle(left_eye, eye_radius, eye_color)
 	draw_circle(right_eye, eye_radius, eye_color)

@@ -1,4 +1,4 @@
-class_name MillipedeController extends Node2D
+class_name MillipedeController extends CreatureController
 ## 千足虫控制器 — 波浪步态（Wave Gait）
 ##
 ## 生物力学参考：
@@ -11,7 +11,6 @@ class_name MillipedeController extends Node2D
 ## - 身体由细短长方形体节拼成
 
 # ===================== 脊柱关节 =====================
-@export var head_anchor: ChainJoint
 @export var head: ChainJoint
 @export var segment_joints: Array[ChainJoint] = []
 @export var tail: ChainJoint
@@ -35,35 +34,30 @@ class LegData extends RefCounted:
 
 var legs: Array[LegData] = []
 
-# ===================== 运动状态 =====================
-var move_speed: float = 60.0
-var body_forward: Vector2 = Vector2.RIGHT
-var _smoothed_forward: Vector2 = Vector2.RIGHT
-var _body_velocity: Vector2 = Vector2.ZERO
-var _last_head_anchor_pos: Vector2 = Vector2.ZERO
-var _velocity_initialized: bool = false
+var _reference_leg_length: float = 0.0
 
 # ===================== 步态参数 =====================
 var _gait_phase: float = 0.0
 var _duty_factor: float = 0.75
-var _stride_length: float = 18.0
+var _stride_length: float = 0.0
 var _phase_per_segment: float = 0.05  # 相邻体节相位差（20段，总波宽~1.0）
 
 # ===================== 腿部参数 =====================
-var _leg_length: float = 4.0     # 脚骨骼长度
-var _rest_side: float = 4.0      # 静止时脚到髋部的距离
-var _hip_offset: float = 3.0     # 髋部到体节中心的距离
+var _leg_length: float = 5.0     # 脚骨骼长度
+var _rest_side: float = 5.0      # 静止时脚到髋部的距离
+var _hip_offset: float = 6.0     # 髋部到体节中心的距离
 
 # 每体节的局部朝向
 var _segment_forwards: Array[Vector2] = []
 
 
 func _ready() -> void:
+	_velocity_lerp_rate = 10.0
 	_init_legs()
 
 
 func _process(delta: float) -> void:
-	_update_head_movement(delta)
+	_update_body_direction(delta)
 	_update_segment_forwards()
 	_update_hip_positions()
 	_update_gait(delta)
@@ -146,6 +140,13 @@ func _init_legs() -> void:
 		leg_data.ground_position = rest_pos
 		_set_foot_world_position(leg_data, rest_pos)
 
+	# 计算参考骨骼长度
+	var total_len: float = 0.0
+	for leg_data: LegData in legs:
+		total_len += leg_data.foot.length
+	_reference_leg_length = total_len / legs.size()
+	_stride_length = _reference_leg_length * 7.2
+
 
 # ===================== 直接控制脚骨骼 =====================
 
@@ -159,24 +160,9 @@ func _set_foot_world_position(leg_data: LegData, world_pos: Vector2) -> void:
 		leg_data.foot.position = Vector2(length, 0)
 
 
-# ===================== 头部移动 =====================
+# ===================== 身体朝向 =====================
 
-func _update_head_movement(delta: float) -> void:
-	var mouse_position: Vector2 = get_global_mouse_position()
-	var direction: Vector2 = mouse_position - head_anchor.global_position
-	var distance: float = direction.length()
-
-	if distance > 1.0:
-		var move_distance: float = minf(distance, move_speed * delta)
-		head_anchor.global_position += direction.normalized() * move_distance
-
-	# 估算身体速度
-	if _velocity_initialized and delta > 0.0:
-		var instant_velocity: Vector2 = (head_anchor.global_position - _last_head_anchor_pos) / delta
-		_body_velocity = _body_velocity.lerp(instant_velocity, minf(1.0, delta * 10.0))
-	_last_head_anchor_pos = head_anchor.global_position
-	_velocity_initialized = true
-
+func _update_body_direction(delta: float) -> void:
 	# 更新身体朝向
 	if head and segment_joints.size() > 0:
 		var first_seg: ChainJoint = segment_joints[0]
@@ -185,6 +171,8 @@ func _update_head_movement(delta: float) -> void:
 			var target_forward: Vector2 = spine_dir.normalized()
 			_smoothed_forward = _smoothed_forward.lerp(target_forward, delta * 8.0).normalized()
 			body_forward = _smoothed_forward
+
+	_update_velocity_estimation(delta)
 
 
 # ===================== 体节局部朝向 =====================
@@ -261,8 +249,8 @@ func _update_single_leg(leg_data: LegData, delta: float, body_speed: float) -> v
 		var rhythm_trigger: bool = in_swing_window and body_speed > 2.0 and leg_data.stance_time > 0.1
 
 		# 误差驱动
-		var error_trigger: bool = leg_data.error_distance > 10.0
-		var emergency_trigger: bool = leg_data.error_distance > 16.0
+		var error_trigger: bool = leg_data.error_distance > _reference_leg_length * 4.0
+		var emergency_trigger: bool = leg_data.error_distance > _reference_leg_length * 6.4
 
 		if emergency_trigger or rhythm_trigger or error_trigger:
 			_start_step(leg_data, rest_position, local_right, body_speed)
@@ -281,5 +269,5 @@ func _start_step(leg_data: LegData, rest_position: Vector2, local_right: Vector2
 	leg_data.step_end = rest_position + predicted_move
 
 	# 贝塞尔曲线控制点：向外侧抬起
-	var lift_height: float = 6.0 + minf(body_speed * 0.04, 3.0)
+	var lift_height: float = _reference_leg_length * 2.4 + minf(body_speed * 0.08, _reference_leg_length * 1.2)
 	leg_data.step_mid = (leg_data.step_start + leg_data.step_end) * 0.5 + local_right * leg_data.side * lift_height

@@ -9,7 +9,7 @@ class_name IKController extends Node2D
 @export var joint_bones: Array[JointBone]
 
 ## 每帧最大迭代次数
-@export var iterations: int = 10:
+@export var iterations: int = 1:
 	set(v):
 		iterations = maxi(1, v)
 
@@ -89,99 +89,52 @@ func _solve_ccdik() -> void:
 		# 从末端到根部逐关节求解
 		for j in range(joint_bones.size() - 1, -1, -1):
 			var bone: JointBone = joint_bones[j]
-			_rotate_bone_toward(bone, tip_bone, target)
-			_apply_constraint(bone)
 
+			# 旋转骨骼使末端朝向目标（原 _rotate_bone_toward 内联）
+			var joint_pos := bone.parent.global_position if bone.parent else bone.global_position
+			var end_effector := tip_bone.global_position
+			if not end_effector.is_equal_approx(joint_pos) and not target.is_equal_approx(joint_pos):
+				var angle_to_effector := (end_effector - joint_pos).angle()
+				var angle_to_target := (target - joint_pos).angle()
+				var delta := angle_to_target - angle_to_effector
+				delta = wrapf(delta, -PI, PI)
+				if max_rotation_per_step > 0.0:
+					var max_rad := deg_to_rad(max_rotation_per_step)
+					delta = clampf(delta, -max_rad, max_rad)
+				var bone_length := bone.position.length()
+				if bone_length >= 0.001:
+					var new_pos_angle := bone.position.angle() + delta
+					bone.position = Vector2.from_angle(new_pos_angle) * bone_length
 
-## 将骨骼旋转使末端效应器朝向目标
-func _rotate_bone_toward(bone: JointBone, tip_bone: JointBone, target: Vector2) -> void:
-	var joint_pos := _get_joint_pos(bone)
-	var end_effector := tip_bone.global_position
-
-	# 末端效应器或目标与关节重合时无法计算有效角度
-	if end_effector.is_equal_approx(joint_pos) or target.is_equal_approx(joint_pos):
-		return
-
-	var angle_to_effector := (end_effector - joint_pos).angle()
-	var angle_to_target := (target - joint_pos).angle()
-	var delta := angle_to_target - angle_to_effector
-
-	# 规范化到 [-PI, PI]
-	delta = wrapf(delta, -PI, PI)
-
-	# 单步旋转限制
-	if max_rotation_per_step > 0.0:
-		var max_rad := deg_to_rad(max_rotation_per_step)
-		delta = clampf(delta, -max_rad, max_rad)
-
-	# 骨骼位置长度为零时无法旋转
-	var bone_length := bone.position.length()
-	if bone_length < 0.001:
-		return
-
-	# 应用旋转：旋转 position 方向
-	var new_pos_angle := bone.position.angle() + delta
-	bone.position = Vector2.from_angle(new_pos_angle) * bone_length
-
-
-## 应用关节角度约束
-func _apply_constraint(bone: JointBone) -> void:
-	var parent_bone := bone.get_parent_bone()
-	if not parent_bone:
-		return
-
-	var bone_joint_pos := _get_joint_pos(bone)
-	var parent_joint_pos := _get_joint_pos(parent_bone)
-
-	var bone_dir := (bone.global_position - bone_joint_pos).angle()
-	# 父骨骼长度为零时，回退使用 global_rotation 作为参考方向
-	var parent_dir: float
-	if parent_bone.global_position.is_equal_approx(parent_joint_pos):
-		parent_dir = parent_bone.global_rotation
-	else:
-		parent_dir = (parent_bone.global_position - parent_joint_pos).angle()
-	var relative_angle_deg := rad_to_deg(bone_dir - parent_dir)
-
-	# 规范化到 [-180, 180]
-	relative_angle_deg = wrapf(relative_angle_deg, -180.0, 180.0)
-
-	# 已在约束范围内则无需修正
-	if relative_angle_deg >= bone.minimum_angle_degrees \
-			and relative_angle_deg <= bone.maximum_angle_degrees:
-		return
-
-	# 计算到两个边界的旋转量，选择最短旋转（考虑角度环绕）
-	var to_min := wrapf(bone.minimum_angle_degrees - relative_angle_deg, -180.0, 180.0)
-	var to_max := wrapf(bone.maximum_angle_degrees - relative_angle_deg, -180.0, 180.0)
-	var correction_deg := to_min if absf(to_min) <= absf(to_max) else to_max
-
-	if absf(correction_deg) < 0.001:
-		return
-
-	var correction_rad := deg_to_rad(correction_deg)
-	var bone_length := bone.position.length()
-	if bone_length < 0.001:
-		return
-	var new_pos_angle := bone.position.angle() + correction_rad
-	bone.position = Vector2.from_angle(new_pos_angle) * bone_length
-
-
-## 获取骨骼的关节位置（旋转中心）
-func _get_joint_pos(bone: JointBone) -> Vector2:
-	var parent_bone := bone.get_parent_bone()
-	if parent_bone:
-		return parent_bone.global_position
-	# 根骨骼：使用父节点的全局位置作为关节
-	var parent := bone.get_parent() as Node2D
-	if parent:
-		return parent.global_position
-	return bone.global_position
+			# 应用关节角度约束（原 _apply_constraint 内联）
+			var parent_bone := bone.parent_bone
+			if parent_bone:
+				var bone_joint_pos := bone.parent.global_position if bone.parent else bone.global_position
+				var parent_joint_pos := parent_bone.parent.global_position if parent_bone.parent else parent_bone.global_position
+				var bone_dir := (bone.global_position - bone_joint_pos).angle()
+				var parent_dir: float
+				if parent_bone.global_position.is_equal_approx(parent_joint_pos):
+					parent_dir = parent_bone.global_rotation
+				else:
+					parent_dir = (parent_bone.global_position - parent_joint_pos).angle()
+				var relative_angle_deg := rad_to_deg(bone_dir - parent_dir)
+				relative_angle_deg = wrapf(relative_angle_deg, -180.0, 180.0)
+				if not (relative_angle_deg >= bone.minimum_angle_degrees and relative_angle_deg <= bone.maximum_angle_degrees):
+					var to_min := wrapf(bone.minimum_angle_degrees - relative_angle_deg, -180.0, 180.0)
+					var to_max := wrapf(bone.maximum_angle_degrees - relative_angle_deg, -180.0, 180.0)
+					var correction_deg := to_min if absf(to_min) <= absf(to_max) else to_max
+					if absf(correction_deg) >= 0.001:
+						var correction_rad := deg_to_rad(correction_deg)
+						var bone_len := bone.position.length()
+						if bone_len >= 0.001:
+							var new_angle := bone.position.angle() + correction_rad
+							bone.position = Vector2.from_angle(new_angle) * bone_len
 
 
 func _draw() -> void:
 	if not enabled:
 		return
-	if not Engine.is_editor_hint():
-		return
+	#if not Engine.is_editor_hint():
+		#return
 	# 绘制目标点指示器
 	draw_circle(Vector2.ZERO, 5.0, Color(1.0, 1.0, 0.0, 0.8))
