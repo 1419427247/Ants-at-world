@@ -1,10 +1,11 @@
-## 跳洪泛洪 Pass — 3×3 邻域查找最近种子 UV
+## 跳洪泛洪 Pass — 同时传播最近固体 UV 和最近空区 UV
+## 输入/输出均为 RGBA16F：RG=最近固体UV, BA=最近空区UV
 
 extends ComputePass
 class_name JumpFloodPass
 
 ## 步长除数（自动计算 step = max(1, size / divisor)）
-@export var jump_flood_step_divisor: int = 0
+@export var jump_flood_step_divisor: int
 
 ## 是否使用方形步长（true 时 step_x = step_y，避免各向异性条纹）
 @export var use_square_step: bool = true
@@ -31,3 +32,8 @@ func _get_push_data() -> PackedByteArray:
 	if _step_x > 0 or _step_y > 0:
 		return PackedInt32Array([_step_x, _step_y]).to_byte_array()
 	return PackedByteArray()
+
+
+## RGBA16F：RG=最近固体UV, BA=最近空区UV
+func _get_output_format(_source_format: int) -> int:
+	return RenderingDevice.DATA_FORMAT_R16G16B16A16_SFLOAT

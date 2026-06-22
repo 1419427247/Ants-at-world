@@ -3,8 +3,8 @@
 extends ComputePass
 class_name RaymarchPass
 
-## 每像素光线数（时间累积会大幅补偿低采样）
-@export var raymarch_num_samples: int = 8
+## 每像素光线数（时间累积会大幅补偿低采样，接入 IndirectPass 后可降至 4）
+@export var raymarch_num_samples: int = 4
 ## 衰减系数
 @export var raymarch_attenuation: float = 3.0
 ## 最大搜索距离（归一化 0-1）
@@ -23,12 +23,11 @@ func _init() -> void:
 
 func _get_push_data() -> PackedByteArray:
 	var push_constant_data: PackedByteArray = PackedByteArray()
-	push_constant_data.resize(28)
+	push_constant_data.resize(24)
 	push_constant_data.encode_s32(0, raymarch_num_samples)
 	push_constant_data.encode_float(4, raymarch_attenuation)
 	push_constant_data.encode_float(8, raymarch_max_distance)
 	push_constant_data.encode_s32(12, raymarch_max_steps)
 	push_constant_data.encode_float(16, raymarch_emissive_threshold)
 	push_constant_data.encode_float(20, raymarch_step_safety)
-	push_constant_data.encode_float(24, input_scale)
 	return push_constant_data

@@ -9,6 +9,8 @@ class_name ATrousPass
 @export var atrous_step_size: int = 1
 ## 颜色双边标准差（越小越保边）
 @export var atrous_color_sigma: float = 0.2
+## 深度双边标准差（越小越保边；基于距离场）
+@export var atrous_depth_sigma: float = 0.05
 
 
 func _init() -> void:
@@ -17,7 +19,8 @@ func _init() -> void:
 
 func _get_push_data() -> PackedByteArray:
 	var push_constant_data: PackedByteArray = PackedByteArray()
-	push_constant_data.resize(8)
+	push_constant_data.resize(12)
 	push_constant_data.encode_s32(0, atrous_step_size)
 	push_constant_data.encode_float(4, atrous_color_sigma)
+	push_constant_data.encode_float(8, atrous_depth_sigma)
 	return push_constant_data

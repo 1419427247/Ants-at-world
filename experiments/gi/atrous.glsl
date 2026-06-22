@@ -4,13 +4,16 @@
 layout(local_size_x = 16, local_size_y = 16, local_size_z = 1) in;
 
 // binding 0: 输入（含噪声的 GI）
-layout(set = 0, binding = 0, rgba8) uniform restrict readonly image2D input_image;
+layout(set = 0, binding = 0, rgba16f) uniform restrict readonly image2D input_image;
 // binding 1: 输出（滤波后）
-layout(set = 0, binding = 1, rgba8) uniform restrict writeonly image2D output_image;
+layout(set = 0, binding = 1, rgba16f) uniform restrict writeonly image2D output_image;
+// binding 2: 有向距离场（RGBA16F: R=到最近异质点距离, GB=异质点UV, A=1，作为深度引导）
+layout(set = 0, binding = 2, rgba16f) uniform restrict readonly image2D depth_image;
 
 layout(push_constant, std430) uniform UniformParameters {
     int step_size;          // 采样间隔（1, 2, 4, ... 每个 pass 翻倍）
     float color_sigma;      // 颜色双边标准差（越小越保边）
+    float depth_sigma;      // 深度双边标准差（越小越保边）
 } uniform_parameters;
 
 void main() {
@@ -20,6 +23,7 @@ void main() {
     if (coordinates.x >= texture_size.x || coordinates.y >= texture_size.y) return;
 
     vec4 center_pixel = imageLoad(input_image, coordinates);
+    float center_depth = imageLoad(depth_image, coordinates).r;
 
     // B3 样条小波权重（a-trous 标准核）
     // 5x5 核，距离 0/1/2 对应权重 c0/c1/c2
@@ -28,6 +32,7 @@ void main() {
     const float c2 = 1.0 / 6.0;
 
     float color_inverse = 1.0 / (2.0 * uniform_parameters.color_sigma * uniform_parameters.color_sigma);
+    float depth_inverse = 1.0 / (2.0 * uniform_parameters.depth_sigma * uniform_parameters.depth_sigma);
 
     vec3 color_sum = center_pixel.rgb * c0 * c0;
     float weight_sum = c0 * c0;
@@ -53,7 +58,12 @@ void main() {
             float color_distance_squared = dot(color_difference, color_difference);
             float weight_color = exp(-color_distance_squared * color_inverse);
 
-            float combined_weight = weight_spatial * weight_color;
+            // 深度权重（基于距离场，保留几何边缘 — 墙体边界不被错误融合）
+            float sample_depth = imageLoad(depth_image, sample_coordinates).r;
+            float depth_diff = abs(sample_depth - center_depth);
+            float weight_depth = exp(-depth_diff * depth_diff * depth_inverse);
+
+            float combined_weight = weight_spatial * weight_color * weight_depth;
             color_sum += sample_pixel.rgb * combined_weight;
             weight_sum += combined_weight;
         }

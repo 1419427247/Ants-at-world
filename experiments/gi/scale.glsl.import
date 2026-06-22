@@ -1,0 +1,14 @@
+[remap]
+
+importer="glsl"
+type="RDShaderFile"
+uid="uid://ddnyq3xiekkxt"
+path="res://.godot/imported/scale.glsl-6b124fb615b600547bce510855fee9d3.res"
+
+[deps]
+
+source_file="res://experiments/gi/scale.glsl"
+dest_files=["res://.godot/imported/scale.glsl-6b124fb615b600547bce510855fee9d3.res"]
+
+[params]
+

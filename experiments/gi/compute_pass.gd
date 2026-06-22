@@ -2,18 +2,14 @@
 ##
 ## 统一 binding 布局：binding 0 = 主输入, binding 1 = 输出, binding 2+ = 额外输入
 ## 每个 Pass 自驱动执行，无需中央编排器。
-## 主输入来源优先级：source_viewport → primary_input → 前一个 ComputePass
-## input_scale：输入采样密度（1.0=每个像素计算，0.5=隔一个像素计算）
-## 输出纹理总是与源纹理同分辨率。
+## 主输入来源优先级：input_texture → source_viewport → primary_input → 前一个 ComputePass
+## 输出纹理默认与源纹理同分辨率，子类可覆盖 _get_output_dimensions() 改变。
 
 class_name ComputePass
 extends Control
 
 ## 是否启用此 Pass
 @export var enabled: bool = true
-
-## 输入采样密度（1.0=全分辨率采样，0.5=隔一个像素采样一次）
-@export var input_scale: float = 1.0
 
 ## 输入纹理（设置后直接使用此纹理作为主输入，优先级最高）
 @export var input_texture: Texture2D
@@ -93,6 +89,15 @@ func _on_output_texture_created() -> void:
 
 func _get_internal_extra_resource_ids() -> Array[RID]:
 	return []
+
+## 输出纹理尺寸钩子，默认与源纹理同尺寸，子类可覆盖返回自定义尺寸
+func _get_output_dimensions(source_width: int, source_height: int) -> Vector2i:
+	return Vector2i(source_width, source_height)
+
+## 输出纹理格式钩子，默认继承源格式；子类可覆盖以使用不同格式
+## 例如距离场 Pass 可返回 R16_SFLOAT 提升精度并节省显存
+func _get_output_format(source_format: int) -> int:
+	return source_format
 
 
 # ======================== 自驱动执行 ========================
@@ -182,8 +187,10 @@ func _process(delta: float) -> void:
 	var source_width: int = source_format_info.width
 	var source_height: int = source_format_info.height
 	var source_format: int = source_format_info.format
+	var output_format: int = _get_output_format(source_format)
+	var output_dimensions: Vector2i = _get_output_dimensions(source_width, source_height)
 
-	if source_width != _output_width or source_height != _output_height or source_format != _output_format or not output_texture_resource_id.is_valid():
+	if output_dimensions.x != _output_width or output_dimensions.y != _output_height or output_format != _output_format or not output_texture_resource_id.is_valid():
 		if output_texture_resource_id.is_valid():
 			rendering_device.free_rid(output_texture_resource_id)
 			output_texture_resource_id = RID()
@@ -191,14 +198,14 @@ func _process(delta: float) -> void:
 			rendering_device.free_rid(uniform_set_resource_id)
 			uniform_set_resource_id = RID()
 
-		_output_width = source_width
-		_output_height = source_height
-		_output_format = source_format
+		_output_width = output_dimensions.x
+		_output_height = output_dimensions.y
+		_output_format = output_format
 
 		var texture_format: RDTextureFormat = RDTextureFormat.new()
 		texture_format.width = _output_width
 		texture_format.height = _output_height
-		texture_format.format = source_format
+		texture_format.format = output_format
 		texture_format.usage_bits = (
 			RenderingDevice.TEXTURE_USAGE_STORAGE_BIT |
 			RenderingDevice.TEXTURE_USAGE_SAMPLING_BIT |
@@ -251,8 +258,8 @@ func _process(delta: float) -> void:
 		_uniform_set_dirty = false
 
 	# ---- dispatch ----
-	var dispatch_groups_x: float = ceili(float(source_width) * input_scale / 16.0)
-	var dispatch_groups_y: float = ceili(float(source_height) * input_scale / 16.0)
+	var dispatch_groups_x: int = ceili(float(_output_width) / 16.0)
+	var dispatch_groups_y: int = ceili(float(_output_height) / 16.0)
 
 	var compute_list_id: int = rendering_device.compute_list_begin()
 	rendering_device.compute_list_bind_compute_pipeline(compute_list_id, pipeline_resource_id)

@@ -1,0 +1,14 @@
+[remap]
+
+importer="glsl"
+type="RDShaderFile"
+uid="uid://dtmhwidk7aq56"
+path="res://.godot/imported/ao_pass.glsl-7ab96e28556866276ffe85690fb7dd2f.res"
+
+[deps]
+
+source_file="res://experiments/gi/ao_pass.glsl"
+dest_files=["res://.godot/imported/ao_pass.glsl-7ab96e28556866276ffe85690fb7dd2f.res"]
+
+[params]
+

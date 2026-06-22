@@ -1,0 +1,14 @@
+[remap]
+
+importer="glsl"
+type="RDShaderFile"
+uid="uid://by67uocw7vy0f"
+path="res://.godot/imported/directional_light_pass.glsl-46d9444c0de1ef606b069d77b12ccbd6.res"
+
+[deps]
+
+source_file="res://experiments/gi/directional_light_pass.glsl"
+dest_files=["res://.godot/imported/directional_light_pass.glsl-46d9444c0de1ef606b069d77b12ccbd6.res"]
+
+[params]
+
