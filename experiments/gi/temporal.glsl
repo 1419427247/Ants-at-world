@@ -25,10 +25,12 @@ void main() {
 
     // AABB Clamp：计算当前帧 3×3 邻域的 min/max，将历史值裁剪到此范围
     // 消除运动时的拖尾残影（ghosting）
+    // aabb min/max 已用中心像素初始化，循环跳过 (0,0) 避免重复采样
     vec3 aabb_minimum = current_pixel.rgb;
     vec3 aabb_maximum = current_pixel.rgb;
     for (int offset_y = -1; offset_y <= 1; offset_y++) {
         for (int offset_x = -1; offset_x <= 1; offset_x++) {
+            if (offset_x == 0 && offset_y == 0) continue;
             ivec2 neighbor_coordinates = clamp(coordinates + ivec2(offset_x, offset_y), ivec2(0), texture_size - 1);
             vec3 neighbor_color = texture(current_frame_image, (vec2(neighbor_coordinates) + 0.5) / vec2(texture_size)).rgb;
             aabb_minimum = min(aabb_minimum, neighbor_color);

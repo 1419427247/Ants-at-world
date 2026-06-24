@@ -21,27 +21,37 @@ void main() {
 
     if (coordinates.x >= texture_size.x || coordinates.y >= texture_size.y) return;
 
-    vec4 center_pixel = texture(input_image, (vec2(coordinates) + 0.5) / vec2(texture_size));
+    vec2 uv = (vec2(coordinates) + 0.5) / vec2(texture_size);
+    vec4 center_pixel = texture(input_image, uv);
 
-    float sigma_sq = uniform_parameters.sigma * uniform_parameters.sigma;
-    float two_sigma_sq = 2.0 * sigma_sq;
-    float norm_factor = 1.0 / sqrt(3.14159265359 * two_sigma_sq);
+    const float PI = 3.14159265359;
+    float sigma = uniform_parameters.sigma;
+    float two_sigma_sq = 2.0 * sigma * sigma;
+    // 标准高斯归一化常数：1 / (σ * √(2π))
+    float norm_factor = 1.0 / (sigma * sqrt(2.0 * PI));
 
     vec4 blur_sum = vec4(0.0);
     float weight_sum = 0.0;
 
-    // 可分离模糊：方向由 uniform_parameters.direction 指定
     bool is_horizontal = (uniform_parameters.direction == 0);
+    vec2 dir = is_horizontal ? vec2(1.0, 0.0) : vec2(0.0, 1.0);
+    vec2 pixel_step = dir / vec2(texture_size);
 
-    for (int offset = -uniform_parameters.radius; offset <= uniform_parameters.radius; offset++) {
-        // 根据方向选择采样偏移
-        int sample_offset = is_horizontal ? offset : 0;
-        int sample_offset_y = is_horizontal ? 0 : offset;
+    // 大 radius 时利用 textureLod + 纹理金字塔减少采样次数
+    // stride 将采样数控制在 ~17 以内，lod 让硬件在低分辨率 mip 上预滤波
+    const int MAX_SAMPLES = 17;
+    int radius = uniform_parameters.radius;
+    int stride = max(1, (2 * radius + 1) / MAX_SAMPLES);
+    int effective_radius = radius / stride;
+    float lod = stride > 1 ? log2(float(stride)) : 0.0;
 
-        ivec2 sample_coords = clamp(coordinates + ivec2(sample_offset, sample_offset_y), ivec2(0), texture_size - 1);
-        vec4 sample_pixel = texture(input_image, (vec2(sample_coords) + 0.5) / vec2(texture_size));
+    for (int offset = -effective_radius; offset <= effective_radius; offset++) {
+        float pixel_offset = float(offset * stride);
+        vec2 sample_uv = uv + pixel_step * pixel_offset;
 
-        float dist_sq = float(offset * offset);
+        vec4 sample_pixel = textureLod(input_image, sample_uv, lod);
+
+        float dist_sq = pixel_offset * pixel_offset;
         float weight = norm_factor * exp(-dist_sq / two_sigma_sq);
 
         blur_sum += sample_pixel * weight;

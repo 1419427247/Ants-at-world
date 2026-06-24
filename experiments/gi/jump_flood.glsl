@@ -21,18 +21,26 @@ void main() {
 
     if (coordinates.x >= texture_size.x || coordinates.y >= texture_size.y) return;
 
-    vec2 position_uv = vec2(float(coordinates.x) / float(texture_size.x), float(coordinates.y) / float(texture_size.y));
+    // 统一使用中心采样 UV（+0.5），与种子存储/采样约定一致
+    vec2 position_uv = (vec2(coordinates) + 0.5) / vec2(texture_size);
 
-    vec4 current = texture(input_image, (vec2(coordinates) + 0.5) / vec2(texture_size));
+    vec4 current = texture(input_image, position_uv);
     vec2 best_solid_uv = current.xy;
     vec2 best_empty_uv = current.zw;
-    float best_solid_dist = 1e10;
-    float best_empty_dist = 1e10;
+    // 平方距离哨兵（避免 sqrt，仅用于比较）
+    float best_solid_dist_sq = 1e20;
+    float best_empty_dist_sq = 1e20;
     bool found_solid = best_solid_uv.x >= 0.0;
     bool found_empty = best_empty_uv.x >= 0.0;
 
-    if (found_solid) best_solid_dist = distance(position_uv, best_solid_uv);
-    if (found_empty) best_empty_dist = distance(position_uv, best_empty_uv);
+    if (found_solid) {
+        vec2 diff = position_uv - best_solid_uv;
+        best_solid_dist_sq = dot(diff, diff);
+    }
+    if (found_empty) {
+        vec2 diff = position_uv - best_empty_uv;
+        best_empty_dist_sq = dot(diff, diff);
+    }
 
     // 检查 3x3 邻域
     for (int offset_x = -1; offset_x <= 1; offset_x++) {
@@ -44,11 +52,12 @@ void main() {
 
             vec4 neighbor = texture(input_image, (vec2(nc) + 0.5) / vec2(texture_size));
 
-            // 更新最近固体
+            // 更新最近固体（平方距离比较，省 sqrt）
             if (neighbor.x >= 0.0) {
-                float d = distance(position_uv, neighbor.xy);
-                if (d < best_solid_dist) {
-                    best_solid_dist = d;
+                vec2 diff = position_uv - neighbor.xy;
+                float d_sq = dot(diff, diff);
+                if (d_sq < best_solid_dist_sq) {
+                    best_solid_dist_sq = d_sq;
                     best_solid_uv = neighbor.xy;
                     found_solid = true;
                 }
@@ -56,9 +65,10 @@ void main() {
 
             // 更新最近空区
             if (neighbor.z >= 0.0) {
-                float d = distance(position_uv, neighbor.zw);
-                if (d < best_empty_dist) {
-                    best_empty_dist = d;
+                vec2 diff = position_uv - neighbor.zw;
+                float d_sq = dot(diff, diff);
+                if (d_sq < best_empty_dist_sq) {
+                    best_empty_dist_sq = d_sq;
                     best_empty_uv = neighbor.zw;
                     found_empty = true;
                 }

@@ -17,11 +17,15 @@ void main() {
 
     if (coordinates.x >= texture_size.x || coordinates.y >= texture_size.y) return;
 
-    vec4 voronoi = texture(voronoi_image, (vec2(coordinates) + 0.5) / vec2(texture_size));
-    vec2 pixel_uv = vec2(float(coordinates.x) / float(texture_size.x), float(coordinates.y) / float(texture_size.y));
+    // 统一中心采样 UV
+    vec2 pixel_uv = (vec2(coordinates) + 0.5) / vec2(texture_size);
+
+    vec4 voronoi = texture(voronoi_image, pixel_uv);
 
     // 判断当前像素是固体还是空区：固体 voxel 的 RG 等于自身 UV
-    bool is_solid = distance(voronoi.xy, pixel_uv) < 0.001;
+    // 用平方距离比较，省 sqrt
+    vec2 solid_diff = voronoi.xy - pixel_uv;
+    bool is_solid = dot(solid_diff, solid_diff) < 1e-6;
 
     vec2 nearest_uv;
     float nearest_dist;
@@ -30,7 +34,8 @@ void main() {
         // 固体 → 最近异质点是空区
         if (voronoi.z >= 0.0) {
             nearest_uv = voronoi.zw;
-            float d = distance(pixel_uv, nearest_uv);
+            vec2 diff = pixel_uv - nearest_uv;
+            float d = length(diff);
             nearest_dist = d < 0.001 ? 0.0 : d;
         } else {
             nearest_uv = vec2(0.0);
@@ -40,7 +45,8 @@ void main() {
         // 空区 → 最近异质点是固体
         if (voronoi.x >= 0.0) {
             nearest_uv = voronoi.xy;
-            float d = distance(pixel_uv, nearest_uv);
+            vec2 diff = pixel_uv - nearest_uv;
+            float d = length(diff);
             nearest_dist = d < 0.001 ? 0.0 : d;
         } else {
             nearest_uv = vec2(0.0);

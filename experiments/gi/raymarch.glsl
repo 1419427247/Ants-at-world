@@ -19,16 +19,16 @@ layout(push_constant, std430) uniform UniformParameters {
     int maximum_steps;           // 每段步进最大步数
     float emissive_threshold;    // 发光阈值
     float step_safety;           // 步进安全系数（<1.0）
-    float rotation_offset;       // 射线初始旋转偏移（弧度）
     float noise_strength;        // 逐像素随机角度偏移强度
     int max_bounces;             // 最大反弹次数
+    float bounce_attenuation;    // 每次反弹的强度衰减系数（0-1）
+    int frame_index;             // 帧序号（时域变化种子）
 } uniform_parameters;
 
-// 逐像素伪随机数（经典 hash）
-float hash12(vec2 p) {
-    vec3 p3 = fract(vec3(p.xyx) * 0.1031);
-    p3 += dot(p3, p3.yzx + 33.33);
-    return fract((p3.x + p3.y) * p3.z);
+// Interleaved Gradient Noise (Jorge Jimenez 2014)
+// 蓝噪声近似，无需纹理，空间分布比白噪声均匀，配合时域累积收敛更快
+float ign(vec2 pos) {
+    return fract(52.9829189 * fract(0.06711056 * pos.x + 0.00583715 * pos.y));
 }
 
 // ------------------------------------------------------------
@@ -41,7 +41,7 @@ float hash12(vec2 p) {
 // ------------------------------------------------------------
 vec3 march_ray(
     vec2 origin_uv, vec2 direction,
-    vec2 scene_texture_size_vec, float min_step_uv
+    ivec2 scene_texture_size, float min_step_uv
 ) {
     vec2 position = origin_uv;
     float total_distance_2d = 0.0;
@@ -50,22 +50,26 @@ vec3 march_ray(
     float bounce_attenuation = 1.0;
     int bounce = 0;
     int max_bounces = uniform_parameters.max_bounces;
+    // 足够接近异质表面（检测带宽度随分辨率自适应：4~16 像素）
+    float surface_threshold = clamp(float(scene_texture_size.x) / 128.0, 4.0, 16.0) * min_step_uv;
 
     // 总步数 = 每段步数 × (最大反弹 + 1)
     int max_steps_total = uniform_parameters.maximum_steps * (max_bounces + 1);
 
     for (int step_index = 0; step_index < max_steps_total; step_index++) {
-        vec2 scene_coords_f = position * scene_texture_size_vec;
+        // 累积亮度早退：反弹衰减过低时后续贡献可忽略
+        if (bounce_attenuation < 0.001) break;
+
+        vec2 scene_coords_f = position * vec2(scene_texture_size);
         ivec2 tc = ivec2(scene_coords_f);
 
-        if (tc.x < 0 || tc.x >= int(scene_texture_size_vec.x) ||
-            tc.y < 0 || tc.y >= int(scene_texture_size_vec.y)) break;
+        if (tc.x < 0 || tc.x >= scene_texture_size.x ||
+            tc.y < 0 || tc.y >= scene_texture_size.y) break;
 
         // 有向距离场：R = 到最近异质点距离
         float step_dist = texture(distance_image, position).r;
 
-        // 足够接近异质表面
-        if (step_dist < 0.01) {
+        if (step_dist < surface_threshold) {
             vec4 surface = texture(scene_image, position);
             float brightness = max(surface.r, max(surface.g, surface.b));
 
@@ -85,13 +89,13 @@ vec3 march_ray(
                     vec2 n = normalize(texture(normal_image, position).xy * 2.0 - 1.0);
 
                     // 根据表面法线计算反射方向
-                    current_dir = reflect(current_dir, n);
+                    vec2 reflect_dir = reflect(current_dir, n);
 
                     // 沿反射方向微偏移避免自碰撞
                     position += current_dir * min_step_uv * 3.0;
                     total_distance_2d = 0.0;
                     bounce++;
-                    bounce_attenuation *= 0.5;
+                    bounce_attenuation *= uniform_parameters.bounce_attenuation;
                     continue;
                 } else {
                     break; // 已达最大反弹次数，阻挡
@@ -125,34 +129,36 @@ void main() {
 
     if (coordinates.x >= output_texture_size.x || coordinates.y >= output_texture_size.y) return;
 
-    vec2 scene_texture_size_vec = vec2(scene_texture_size);
-    float min_step_uv = 1.0 / float(scene_texture_size.x);
+    float min_step_uv = 1.0 / float(max(scene_texture_size.x,scene_texture_size.y));
+    // 宽高比修正：UV 空间是正方形，视口是长方形，需修正方向使屏幕上为圆
+    vec2 aspect_vec = vec2(1.0, float(scene_texture_size.x) / float(scene_texture_size.y));
 
     vec2 uv_coordinates = (vec2(coordinates) + 0.5) / vec2(output_texture_size);
 
-    // 自身是发光体 → 直接输出自身颜色
+    // 自身是发光体 → 输出透明（不参与光照混合）
     vec4 self_pixel = texture(scene_image, uv_coordinates);
     float self_brightness = max(self_pixel.r, max(self_pixel.g, self_pixel.b));
     if (self_brightness > uniform_parameters.emissive_threshold) {
-        imageStore(output_image, coordinates, self_pixel);
+        imageStore(output_image, coordinates, vec4(self_pixel.rgb, 1.0));
         return;
     }
 
-    // 自身是障碍物 → 输出自身颜色（作为其他光线反弹的源）
+    // 自身是障碍物 → 输出透明
     if (self_pixel.a > 0.0) {
-        imageStore(output_image, coordinates, vec4(self_pixel.rgb, 1.0));
+        imageStore(output_image, coordinates, vec4(0.0, 0.0, 0.0, 1.0));
         return;
     }
 
     // 空区：发射多条光线 + 多次反弹
     vec3 total_light = vec3(0.0);
-    float pixel_noise = hash12(uv_coordinates) * uniform_parameters.noise_strength;
+    // IGN 蓝噪声 + frame_index 时域偏移：每帧平移噪声模式，配合 Temporal Pass 加速收敛
+    float pixel_noise = ign(coordinates + vec2(uniform_parameters.frame_index)) * uniform_parameters.noise_strength;
 
     for (int sample_index = 0; sample_index < uniform_parameters.number_samples; sample_index++) {
-        float angle = uniform_parameters.rotation_offset + pixel_noise
+        float angle = pixel_noise
             + 6.28318530718 * float(sample_index) / float(uniform_parameters.number_samples);
-        vec2 direction = vec2(cos(angle), sin(angle));
-        total_light += march_ray(uv_coordinates, direction, scene_texture_size_vec, min_step_uv);
+        vec2 direction = normalize(vec2(cos(angle), sin(angle)) * aspect_vec);
+        total_light += march_ray(uv_coordinates, direction, scene_texture_size, min_step_uv);
     }
 
     total_light /= float(uniform_parameters.number_samples);

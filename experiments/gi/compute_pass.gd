@@ -25,6 +25,11 @@ class_name ComputePass extends Node
 ## 输出目标 TextureRect（每帧更新该控件纹理，用于屏幕输出）
 @export var output_target: TextureRect
 
+## 输出纹理缩放（0.1~1.0）。1.0=全分辨率，0.5=半分辨率。
+## 通过 _get_output_dimensions 控制输出纹理尺寸，不影响输入。
+## 子类可覆盖 _get_output_dimensions() 以定制输出尺寸。
+@export var output_scale: float = 1.0
+
 var shader_path: String
 var rendering_device: RenderingDevice
 var shader_resource_id: RID
@@ -96,9 +101,10 @@ func _on_output_texture_created() -> void:
 func _get_internal_extra_resource_ids() -> Array[RID]:
 	return []
 
-## 输出纹理尺寸钩子，默认与源纹理同尺寸，子类可覆盖返回自定义尺寸
+## 输出纹理尺寸钩子，默认缩放 output_scale 倍，子类可覆盖返回自定义尺寸
 func _get_output_dimensions(source_width: int, source_height: int) -> Vector2i:
-	return Vector2i(source_width, source_height)
+	var scale = clampf(output_scale, 0.1, 1.0)
+	return Vector2i(maxi(1, int(source_width * scale)), maxi(1, int(source_height * scale)))
 
 ## 输出纹理格式钩子，默认继承源格式；子类可覆盖以使用不同格式
 ## 例如距离场 Pass 可返回 R16_SFLOAT 提升精度并节省显存

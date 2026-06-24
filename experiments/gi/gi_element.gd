@@ -13,3 +13,8 @@ func _process(delta: float) -> void:
 	for child: Node2D in _children:
 		child.global_position = global_position
 		child.global_rotation = global_rotation
+
+func _exit_tree() -> void:
+	for child: Node2D in _children:
+		if is_instance_valid(child):
+			child.queue_free()
