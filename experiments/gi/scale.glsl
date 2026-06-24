@@ -4,7 +4,7 @@
 layout(local_size_x = 16, local_size_y = 16, local_size_z = 1) in;
 
 // binding 0: 输入纹理
-layout(set = 0, binding = 0, rgba16f) uniform restrict readonly image2D input_image;
+layout(set = 0, binding = 0) uniform sampler2D input_image;
 // binding 1: 输出纹理（目标尺寸）
 layout(set = 0, binding = 1, rgba16f) uniform restrict writeonly image2D output_image;
 
@@ -35,7 +35,7 @@ vec4 sample_bicubic(vec2 input_position, ivec2 input_size) {
     for (int j = -1; j <= 2; j++) {
         for (int i = -1; i <= 2; i++) {
             ivec2 sample_coord = clamp(base + ivec2(i, j), ivec2(0), input_size - 1);
-            vec4 sample_color = imageLoad(input_image, sample_coord);
+            vec4 sample_color = texture(input_image, (vec2(sample_coord) + 0.5) / vec2(input_size));
             float weight = wy[j + 1] * wx[i + 1];
             result += sample_color * weight;
         }
@@ -46,7 +46,7 @@ vec4 sample_bicubic(vec2 input_position, ivec2 input_size) {
 void main() {
     ivec2 coordinates = ivec2(gl_GlobalInvocationID.xy);
     ivec2 output_size = imageSize(output_image);
-    ivec2 input_size = imageSize(input_image);
+    ivec2 input_size = textureSize(input_image, 0);
 
     if (coordinates.x >= output_size.x || coordinates.y >= output_size.y) return;
 
@@ -68,10 +68,10 @@ void main() {
         ivec2 sample_coordinates_01 = clamp(base_coordinates + ivec2(0, 1), ivec2(0), input_size - 1);
         ivec2 sample_coordinates_11 = clamp(base_coordinates + ivec2(1, 1), ivec2(0), input_size - 1);
 
-        vec4 color_00 = imageLoad(input_image, sample_coordinates_00);
-        vec4 color_10 = imageLoad(input_image, sample_coordinates_10);
-        vec4 color_01 = imageLoad(input_image, sample_coordinates_01);
-        vec4 color_11 = imageLoad(input_image, sample_coordinates_11);
+        vec4 color_00 = texture(input_image, (vec2(sample_coordinates_00) + 0.5) / vec2(input_size));
+        vec4 color_10 = texture(input_image, (vec2(sample_coordinates_10) + 0.5) / vec2(input_size));
+        vec4 color_01 = texture(input_image, (vec2(sample_coordinates_01) + 0.5) / vec2(input_size));
+        vec4 color_11 = texture(input_image, (vec2(sample_coordinates_11) + 0.5) / vec2(input_size));
 
         vec4 color_top = mix(color_00, color_10, fraction.x);
         vec4 color_bottom = mix(color_01, color_11, fraction.x);

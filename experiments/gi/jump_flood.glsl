@@ -6,7 +6,7 @@ layout(local_size_x = 16, local_size_y = 16, local_size_z = 1) in;
 // binding 0: 输入 RGBA16F
 //   RG = 最近固体种子 UV（哨兵 x<0）
 //   BA = 最近空区种子 UV（哨兵 z<0）
-layout(set = 0, binding = 0, rgba16f) uniform restrict readonly image2D input_image;
+layout(set = 0, binding = 0) uniform sampler2D input_image;
 // binding 1: 输出 RGBA16F（同结构）
 layout(set = 0, binding = 1, rgba16f) uniform restrict writeonly image2D output_image;
 
@@ -23,7 +23,7 @@ void main() {
 
     vec2 position_uv = vec2(float(coordinates.x) / float(texture_size.x), float(coordinates.y) / float(texture_size.y));
 
-    vec4 current = imageLoad(input_image, coordinates);
+    vec4 current = texture(input_image, (vec2(coordinates) + 0.5) / vec2(texture_size));
     vec2 best_solid_uv = current.xy;
     vec2 best_empty_uv = current.zw;
     float best_solid_dist = 1e10;
@@ -42,7 +42,7 @@ void main() {
             ivec2 nc = coordinates + ivec2(offset_x * uniform_parameters.step_x, offset_y * uniform_parameters.step_y);
             if (nc.x < 0 || nc.x >= texture_size.x || nc.y < 0 || nc.y >= texture_size.y) continue;
 
-            vec4 neighbor = imageLoad(input_image, nc);
+            vec4 neighbor = texture(input_image, (vec2(nc) + 0.5) / vec2(texture_size));
 
             // 更新最近固体
             if (neighbor.x >= 0.0) {

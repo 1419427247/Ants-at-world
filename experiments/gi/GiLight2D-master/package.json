@@ -1,0 +1,25 @@
+{
+  "name": "www.nulltale.gilight2d",
+  "displayName": "GiLight2D",
+  "version": "1.1.2",
+  "unity": "2021.3",
+  "description": "Global illumination render feature",
+  "documentationUrl": "https://github.com/NullTale/GiLight2D",
+  "licensesUrl": "https://github.com/NullTale/GiLight2D/blob/master/LICENSE.md",
+  "author": {
+    "name": "NullTale",
+    "email": "nulltale@gmail.com",
+    "url": "https://github.com/NullTale"
+  },
+  "dependencies": {
+    "com.unity.render-pipelines.universal": "14.0.06"
+  },
+  "samples": [
+      {
+          "displayName": "Samples",
+          "description": "Contains sample scene",
+          "path": "Samples~/"
+      }
+  ],
+  "hideInEditor": false
+}

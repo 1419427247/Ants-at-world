@@ -4,7 +4,7 @@
 layout(local_size_x = 16, local_size_y = 16, local_size_z = 1) in;
 
 // binding 0: Voronoi 结果（RGBA16F: RG=最近固体UV, BA=最近空区UV, 哨兵 <0）
-layout(set = 0, binding = 0, rgba16f) uniform restrict readonly image2D voronoi_image;
+layout(set = 0, binding = 0) uniform sampler2D voronoi_image;
 // binding 1: 输出（RGBA16F）
 //   R  = 到最近异质点的距离
 //   GB = 指向最近异质点的方向向量（归一化）
@@ -17,7 +17,7 @@ void main() {
 
     if (coordinates.x >= texture_size.x || coordinates.y >= texture_size.y) return;
 
-    vec4 voronoi = imageLoad(voronoi_image, coordinates);
+    vec4 voronoi = texture(voronoi_image, (vec2(coordinates) + 0.5) / vec2(texture_size));
     vec2 pixel_uv = vec2(float(coordinates.x) / float(texture_size.x), float(coordinates.y) / float(texture_size.y));
 
     // 判断当前像素是固体还是空区：固体 voxel 的 RG 等于自身 UV

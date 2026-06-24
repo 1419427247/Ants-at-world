@@ -4,7 +4,7 @@
 layout(local_size_x = 16, local_size_y = 16, local_size_z = 1) in;
 
 // binding 0: 输入纹理
-layout(set = 0, binding = 0, rgba16f) uniform restrict readonly image2D input_image;
+layout(set = 0, binding = 0) uniform sampler2D input_image;
 // binding 1: 输出纹理
 layout(set = 0, binding = 1, rgba16f) uniform restrict writeonly image2D output_image;
 
@@ -21,7 +21,7 @@ void main() {
 
     if (coordinates.x >= texture_size.x || coordinates.y >= texture_size.y) return;
 
-    vec4 center_pixel = imageLoad(input_image, coordinates);
+    vec4 center_pixel = texture(input_image, (vec2(coordinates) + 0.5) / vec2(texture_size));
 
     float sigma_sq = uniform_parameters.sigma * uniform_parameters.sigma;
     float two_sigma_sq = 2.0 * sigma_sq;
@@ -39,7 +39,7 @@ void main() {
         int sample_offset_y = is_horizontal ? 0 : offset;
 
         ivec2 sample_coords = clamp(coordinates + ivec2(sample_offset, sample_offset_y), ivec2(0), texture_size - 1);
-        vec4 sample_pixel = imageLoad(input_image, sample_coords);
+        vec4 sample_pixel = texture(input_image, (vec2(sample_coords) + 0.5) / vec2(texture_size));
 
         float dist_sq = float(offset * offset);
         float weight = norm_factor * exp(-dist_sq / two_sigma_sq);

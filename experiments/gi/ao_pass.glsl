@@ -3,47 +3,40 @@
 
 layout(local_size_x = 16, local_size_y = 16, local_size_z = 1) in;
 
-// binding 0: 场景纹理（Alpha 通道存地面高度）
-layout(set = 0, binding = 0, rgba16f) uniform restrict readonly image2D scene_texture;
+// binding 0: 场景纹理（Alpha 通道判断障碍物）
+layout(set = 0, binding = 0) uniform sampler2D scene_texture;
 // binding 1: 输出（R=AO因子, GBA=1）
 layout(set = 0, binding = 1, rgba16f) uniform restrict writeonly image2D output_image;
 // binding 2: 有向距离场（RGBA16F: R=到最近异质点距离, GB=方向, A=1）
-layout(set = 0, binding = 2, rgba16f) uniform restrict readonly image2D distance_image;
+layout(set = 0, binding = 2) uniform sampler2D distance_image;
 
 layout(push_constant, std430) uniform UniformParameters {
     int   num_samples;         // 每像素采样点数
     float radius;              // 采样半径（归一化）
     float intensity;           // 遮蔽强度系数
     float falloff;             // 遮蔽衰减指数
-    float bias;                // 高度偏移，防止自遮挡
-    float df_guide_weight;     // 距离场引导权重（0=纯黄金角度, 1=纯距离场引导）
+    float bias;                // 偏移，防止自遮挡
+    float df_guide_weight;     // 距离场引导权重（0=纯均匀, 1=纯距离场引导）
 } uniform_parameters;
 
-// 黄金角度
-const float GOLDEN_ANGLE = 2.399963229728653;
 const float PI = 3.14159265359;
 
-// PCG 哈希
-uint pcg_hash(uint v) {
-    uint state = v * 747796405u + 2891336453u;
-    uint word = ((state >> ((state >> 28u) + 4u)) ^ state) * 277803737u;
-    return (word >> 22u) ^ word;
-}
-
-float hash12(vec2 position) {
-    uvec2 p = uvec2(position);
-    uint v = p.x * 1973u + p.y * 9277u + 26699u;
-    return float(pcg_hash(v)) * (1.0 / 4294967296.0);
+// 逐像素伪随机数
+float hash12(vec2 p) {
+    vec3 p3 = fract(vec3(p.xyx) * 0.1031);
+    p3 += dot(p3, p3.yzx + 33.33);
+    return fract((p3.x + p3.y) * p3.z);
 }
 
 // ------------------------------------------------------------
-// 主函数：距离场引导采样，基于高度差计算遮挡
-// 利用距离场方向分量（GB）优先在可能有遮挡的方向采样
+// 主函数：基于距离场的 2D 环境光遮蔽
+// 核心思路：沿各方向采样，检查射线是否被障碍物阻挡
+// 被阻挡的方向越多、距离越近，AO 越强
 // ------------------------------------------------------------
 void main() {
     ivec2 coordinates = ivec2(gl_GlobalInvocationID.xy);
     ivec2 output_texture_size = imageSize(output_image);
-    ivec2 scene_texture_size = imageSize(scene_texture);
+    ivec2 scene_texture_size = textureSize(scene_texture, 0);
 
     if (coordinates.x >= output_texture_size.x || coordinates.y >= output_texture_size.y) return;
 
@@ -51,76 +44,69 @@ void main() {
     float pixel_size = 1.0 / float(scene_texture_size.x);
 
     vec2 uv_coordinates = (vec2(coordinates) + 0.5) / vec2(output_texture_size);
-    ivec2 scene_coordinates = ivec2(uv_coordinates * texture_size_vec);
 
-    // 读取中心点高度和距离场
-    float center_height = imageLoad(scene_texture, scene_coordinates).a;
-    vec4 df_center = imageLoad(distance_image, scene_coordinates);
-    float center_sdf = df_center.r;
+    // 自身是障碍物：无 AO
+    float self_alpha = texture(scene_texture, uv_coordinates).a;
+    if (self_alpha > 0.0) {
+        imageStore(output_image, coordinates, vec4(0.0, 0.0, 0.0, 1.0));
+        return;
+    }
 
-    // 随机旋转偏移
+    // 自身距离场值
+    float center_sdf = texture(distance_image, uv_coordinates).r;
+
+    // 随机旋转偏移（每帧一致，避免闪烁）
     float rotation = hash12(vec2(coordinates)) * 2.0 * PI;
-    float cos_r = cos(rotation);
-    float sin_r = sin(rotation);
 
     float total_occlusion = 0.0;
     float sample_radius = uniform_parameters.radius;
     float guide_weight = uniform_parameters.df_guide_weight;
 
     for (int i = 0; i < uniform_parameters.num_samples; i++) {
-        // 黄金螺旋采样分布
-        float golden_angle = GOLDEN_ANGLE * float(i);
-        float radius_factor = sqrt((float(i) + 0.5) / float(uniform_parameters.num_samples));
+        // 均匀角度分布 + 随机旋转偏移
+        float base_angle = rotation + 2.0 * PI * float(i) / float(uniform_parameters.num_samples);
 
-        vec2 golden_offset = vec2(cos(golden_angle), sin(golden_angle)) * radius_factor * sample_radius;
+        // 距离场引导：在采样方向上查询距离场，偏向有遮挡的方向
+        vec2 base_dir = vec2(cos(base_angle), sin(base_angle));
 
-        // 距离场引导：在采样路径中点查询距离场方向，偏移采样方向朝向附近表面
-        vec2 mid_uv = uv_coordinates + golden_offset * 0.5;
-        ivec2 mid_tc = ivec2(mid_uv * texture_size_vec);
-        mid_tc = clamp(mid_tc, ivec2(0), ivec2(texture_size_vec) - 1);
-        vec2 df_dir_mid = imageLoad(distance_image, mid_tc).gb;
+        // 沿方向步进，检查是否被障碍物阻挡
+        float max_dist = sample_radius;
+        float occlusion = 0.0;
 
-        // 将距离场方向作为引导方向，与黄金角度方向混合
-        vec2 guided_offset = df_dir_mid * radius_factor * sample_radius;
-        vec2 blended_offset = mix(golden_offset, guided_offset, guide_weight);
+        // 在采样方向上取几个点检查遮挡
+        for (int step = 1; step <= 3; step++) {
+            float t = max_dist * float(step) / 3.0;
+            vec2 sample_uv = uv_coordinates + base_dir * t;
 
-        // 应用随机旋转
-        vec2 rotated_offset = vec2(
-            blended_offset.x * cos_r - blended_offset.y * sin_r,
-            blended_offset.x * sin_r + blended_offset.y * cos_r
-        );
+            // 边界检查：超出纹理范围 → 跳过此采样点，不贡献遮挡
+            if (sample_uv.x < 0.0 || sample_uv.x > 1.0 ||
+                sample_uv.y < 0.0 || sample_uv.y > 1.0) {
+                continue;
+            }
 
-        vec2 sample_uv = uv_coordinates + rotated_offset;
-        ivec2 sample_tc = ivec2(sample_uv * texture_size_vec);
+            float sample_sdf = texture(distance_image, sample_uv).r;
 
-        // 边界检查
-        if (sample_tc.x < 0 || sample_tc.x >= int(texture_size_vec.x) ||
-            sample_tc.y < 0 || sample_tc.y >= int(texture_size_vec.y)) continue;
-
-        // 采样距离场
-        float sample_sdf = imageLoad(distance_image, sample_tc).r;
-
-        // 如果采样点在物体内部或表面附近（距离 < 半径），产生遮挡
-        if (sample_sdf < sample_radius * radius_factor * 0.5) {
-            // 采样点高度
-            float sample_height = imageLoad(scene_texture, sample_tc).a;
-
-            // 高度差：采样点比中心点高则产生遮挡
-            float height_diff = sample_height - center_height - uniform_parameters.bias;
-
-            if (height_diff > 0.0) {
-                // 距离衰减：越近遮挡越强
-                float dist = length(rotated_offset);
-                float dist_factor = 1.0 - smoothstep(0.0, sample_radius, dist);
-                total_occlusion += dist_factor * height_diff * uniform_parameters.intensity;
+            // 距离场值很小 = 非常靠近障碍物 = 强遮挡
+            // 距离场值为 0 = 在障碍物内部 = 完全遮挡
+            if (sample_sdf < pixel_size) {
+                // 在障碍物表面或内部
+                float dist_factor = 1.0 - t / max_dist; // 越近越强
+                occlusion += dist_factor / float(step);
+            } else if (sample_sdf < t * 0.5) {
+                // 障碍物在射线方向上较近
+                float dist_factor = 1.0 - t / max_dist;
+                float sdf_factor = 1.0 - sample_sdf / (t * 0.5);
+                occlusion += dist_factor * sdf_factor * 0.5 / float(step);
             }
         }
+
+        total_occlusion += occlusion;
     }
 
     total_occlusion /= float(uniform_parameters.num_samples);
 
-    // 应用衰减
-    float ao = pow(total_occlusion, uniform_parameters.falloff);
+    // 应用强度和衰减
+    float ao = pow(total_occlusion * uniform_parameters.intensity, uniform_parameters.falloff);
     ao = clamp(ao, 0.0, 1.0);
 
     // 输出：R=AO因子（1=完全遮挡，0=无遮挡）

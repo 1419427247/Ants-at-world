@@ -5,8 +5,7 @@
 ## 主输入来源优先级：input_texture → source_viewport → primary_input → 前一个 ComputePass
 ## 输出纹理默认与源纹理同分辨率，子类可覆盖 _get_output_dimensions() 改变。
 
-class_name ComputePass
-extends Control
+class_name ComputePass extends Node
 
 ## 是否启用此 Pass
 @export var enabled: bool = true
@@ -15,7 +14,7 @@ extends Control
 @export var input_texture: Texture2D
 
 ## 源视口（设置后用视口纹理作为主输入）
-@export var source_viewport: SubViewport
+@export var source_viewport: Viewport
 
 ## 主输入 Pass（source_viewport 为空时用该 Pass 的输出）
 @export var primary_input: ComputePass
@@ -32,8 +31,8 @@ var shader_resource_id: RID
 var pipeline_resource_id: RID
 var output_texture_resource_id: RID
 var uniform_set_resource_id: RID
-var display_texture: Texture2DRD
-var _output_target_wrapper: Texture2DRD
+var sampler_resource_id: RID
+var display_texture: Texture2DRD = Texture2DRD.new()
 
 ## 帧计数器（每次成功 dispatch 后递增，供后续 Pass 判断是否有新输出）
 var frame_counter: int = 0
@@ -48,7 +47,7 @@ var _last_consumed_frame: Dictionary = {}  # ComputePass -> int
 var _storage_copy_resource_id: RID
 # uniform set 缓存
 var _bound_source_resource_id: RID
-var _bound_extra_resource_ids: Array[RID] = []
+var _bound_extra_resource_ids: Array[RID]
 var _uniform_set_dirty: bool = true
 
 
@@ -56,7 +55,6 @@ func _ready() -> void:
 	rendering_device = RenderingServer.get_rendering_device()
 	assert(rendering_device != null, "无法获取主渲染设备")
 	assert(shader_path != "", "shader_path 未设置 — 请使用子类")
-	display_texture = Texture2DRD.new()
 
 	if not output_target:
 		for child in get_children():
@@ -71,6 +69,14 @@ func _ready() -> void:
 	assert(shader_resource_id.is_valid(), "着色器编译失败: " + shader_path)
 	pipeline_resource_id = rendering_device.compute_pipeline_create(shader_resource_id)
 	assert(pipeline_resource_id.is_valid(), "管线创建失败: " + shader_path)
+
+	# 创建采样器（最近邻，无各向异性过滤）
+	var sampler_state := RDSamplerState.new()
+	sampler_state.min_filter = RenderingDevice.SAMPLER_FILTER_NEAREST
+	sampler_state.mag_filter = RenderingDevice.SAMPLER_FILTER_NEAREST
+	sampler_state.mip_filter = RenderingDevice.SAMPLER_FILTER_NEAREST
+	sampler_resource_id = rendering_device.sampler_create(sampler_state)
+	assert(sampler_resource_id.is_valid(), "采样器创建失败: " + shader_path)
 
 
 # ======================== 子类钩子 ========================
@@ -134,8 +140,9 @@ func _process(delta: float) -> void:
 			for i in range(node_index - 1, -1, -1):
 				var sibling: Node = parent.get_child(i)
 				if sibling is ComputePass:
-					primary_resource_id = (sibling as ComputePass).get_output_resource_id()
-					break
+					if sibling.enabled:
+						primary_resource_id = (sibling as ComputePass).get_output_resource_id()
+						break
 
 	if not primary_resource_id.is_valid():
 		return
@@ -143,10 +150,9 @@ func _process(delta: float) -> void:
 	# ---- 获取外部额外输入 RID ----
 	# 注意：内部额外输入（如 TemporalPass 的历史纹理）在 _on_output_texture_created 之后获取，
 	# 因为该回调可能重建内部纹理，提前获取会拿到已释放的旧 RID
-	var extra_resource_ids: Array[RID] = []
-	for pass_node in extra_input_sources:
-		if pass_node:
-			extra_resource_ids.append(pass_node.get_output_resource_id())
+	var extra_resource_ids: Array[RID]
+	for pass_node: ComputePass in extra_input_sources:
+		extra_resource_ids.append(pass_node.get_output_resource_id())
 
 	# ---- 检查输入就绪 ----
 	if not primary_resource_id.is_valid():
@@ -230,25 +236,30 @@ func _process(delta: float) -> void:
 
 		var uniforms: Array[RDUniform] = []
 
+		# binding 0: 主输入（sampler2D 只读采样）
 		var input_uniform: RDUniform = RDUniform.new()
-		input_uniform.uniform_type = RenderingDevice.UNIFORM_TYPE_IMAGE
+		input_uniform.uniform_type = RenderingDevice.UNIFORM_TYPE_SAMPLER_WITH_TEXTURE
 		input_uniform.binding = 0
+		input_uniform.add_id(sampler_resource_id)
 		input_uniform.add_id(primary_resource_id)
 		uniforms.append(input_uniform)
 
+		# binding 1: 输出（image2D 可写）
 		var output_uniform: RDUniform = RDUniform.new()
 		output_uniform.uniform_type = RenderingDevice.UNIFORM_TYPE_IMAGE
 		output_uniform.binding = 1
 		output_uniform.add_id(output_texture_resource_id)
 		uniforms.append(output_uniform)
 
+		# binding 2+: 额外输入（sampler2D 只读采样）
 		for i in range(extra_resource_ids.size()):
 			var resource_id: RID = extra_resource_ids[i]
 			if not resource_id.is_valid():
 				resource_id = output_texture_resource_id
 			var extra_uniform: RDUniform = RDUniform.new()
-			extra_uniform.uniform_type = RenderingDevice.UNIFORM_TYPE_IMAGE
+			extra_uniform.uniform_type = RenderingDevice.UNIFORM_TYPE_SAMPLER_WITH_TEXTURE
 			extra_uniform.binding = 2 + i
+			extra_uniform.add_id(sampler_resource_id)
 			extra_uniform.add_id(resource_id)
 			uniforms.append(extra_uniform)
 
@@ -274,12 +285,6 @@ func _process(delta: float) -> void:
 
 	# ---- 输出结果 ----
 	display_texture.texture_rd_rid = output_texture_resource_id
-
-	if output_target:
-		if not _output_target_wrapper:
-			_output_target_wrapper = Texture2DRD.new()
-		_output_target_wrapper.texture_rd_rid = output_texture_resource_id
-		output_target.texture = _output_target_wrapper
 
 	# ---- 标记消费/递增帧 ----
 	if not source_viewport:
@@ -310,9 +315,6 @@ func get_output_resource_id() -> RID:
 
 func _exit_tree() -> void:
 	display_texture.texture_rd_rid = RID()
-	if _output_target_wrapper:
-		_output_target_wrapper.texture_rd_rid = RID()
-
 	if uniform_set_resource_id.is_valid():
 		rendering_device.free_rid(uniform_set_resource_id)
 		uniform_set_resource_id = RID()
@@ -329,3 +331,6 @@ func _exit_tree() -> void:
 	if shader_resource_id.is_valid():
 		rendering_device.free_rid(shader_resource_id)
 		shader_resource_id = RID()
+	if sampler_resource_id.is_valid():
+		rendering_device.free_rid(sampler_resource_id)
+		sampler_resource_id = RID()

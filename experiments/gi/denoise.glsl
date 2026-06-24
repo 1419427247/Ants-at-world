@@ -4,7 +4,7 @@
 layout(local_size_x = 16, local_size_y = 16, local_size_z = 1) in;
 
 // binding 0: 输入（含噪声的 GI）
-layout(set = 0, binding = 0, rgba8) uniform restrict readonly image2D input_image;
+layout(set = 0, binding = 0) uniform sampler2D input_image;
 // binding 1: 输出（降噪后）
 layout(set = 0, binding = 1, rgba8) uniform restrict writeonly image2D output_image;
 
@@ -20,7 +20,7 @@ void main() {
 
     if (coordinates.x >= texture_size.x || coordinates.y >= texture_size.y) return;
 
-    vec4 center_pixel = imageLoad(input_image, coordinates);
+    vec4 center_pixel = texture(input_image, (vec2(coordinates) + 0.5) / vec2(texture_size));
 
     vec3 color_sum = vec3(0.0);
     float weight_sum = 0.0;
@@ -35,7 +35,7 @@ void main() {
             // 边界 clamp
             sample_coordinates = clamp(sample_coordinates, ivec2(0), texture_size - 1);
 
-            vec4 sample_color = imageLoad(input_image, sample_coordinates);
+            vec4 sample_color = texture(input_image, (vec2(sample_coordinates) + 0.5) / vec2(texture_size));
 
             // 空间权重（高斯）
             float spatial_distance_squared = float(offset_x * offset_x + offset_y * offset_y);

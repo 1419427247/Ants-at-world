@@ -4,11 +4,11 @@
 layout(local_size_x = 16, local_size_y = 16, local_size_z = 1) in;
 
 // binding 0: 亮度纹理（Alpha 通道存地面高度）
-layout(set = 0, binding = 0, rgba16f) uniform restrict readonly image2D luminance_texture;
+layout(set = 0, binding = 0) uniform sampler2D luminance_texture;
 // binding 1: 输出（R=可见性, G=遮挡物距离/最大距离, B=0, A=1）
 layout(set = 0, binding = 1, rgba16f) uniform restrict writeonly image2D output_image;
 // binding 2: 有向距离场（RGBA16F: R=到最近异质点距离, GB=方向, A=1）
-layout(set = 0, binding = 2, rgba16f) uniform restrict readonly image2D distance_image;
+layout(set = 0, binding = 2) uniform sampler2D distance_image;
 
 layout(push_constant, std430) uniform UniformParameters {
     vec2  direction;           // 平行光 2D 方向（光传播方向，归一化）
@@ -37,10 +37,10 @@ float directional_light_visibility(
             tc.y < 0 || tc.y >= int(luminance_size_vec.y)) break;
 
         // 有向距离场：R=到最近异质点距离
-        float step_dist = imageLoad(distance_image, tc).r;
+        float step_dist = texture(distance_image, position).r;
 
         if (step_dist < 0.01) {
-            float ground_height = imageLoad(luminance_texture, tc).a;
+            float ground_height = texture(luminance_texture, position).a;
 
             float t = total_distance / uniform_parameters.max_distance;
             float ray_height = mix(origin_height, uniform_parameters.height, t);
@@ -72,7 +72,7 @@ float directional_light_visibility(
 void main() {
     ivec2 coordinates = ivec2(gl_GlobalInvocationID.xy);
     ivec2 output_texture_size = imageSize(output_image);
-    ivec2 luminance_size = imageSize(luminance_texture);
+    ivec2 luminance_size = textureSize(luminance_texture, 0);
 
     if (coordinates.x >= output_texture_size.x || coordinates.y >= output_texture_size.y) return;
 
@@ -83,7 +83,7 @@ void main() {
     ivec2 luminance_coordinates = ivec2(uv_coordinates * luminance_size_vec);
 
     // 读取起点高度
-    float origin_height = imageLoad(luminance_texture, luminance_coordinates).a;
+    float origin_height = texture(luminance_texture, uv_coordinates).a;
 
     // 可见性测试，同时获取遮挡距离
     float blocker_distance;

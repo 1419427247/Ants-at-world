@@ -1,0 +1,610 @@
+[gd_scene format=3 uid="uid://b3fm14s8bc11k"]
+
+[ext_resource type="Shader" uid="uid://c6cmvep1bphw" path="res://experiments/gi/soil.gdshader" id="1_3klt6"]
+[ext_resource type="Texture2D" uid="uid://ctou42dhffeyl" path="res://assets/circle.png" id="1_icwau"]
+[ext_resource type="Script" uid="uid://7qnbpusa2ij7" path="res://experiments/gi/scale_pass.gd" id="1_nk48r"]
+[ext_resource type="Script" uid="uid://cv3uf25u6r4ic" path="res://experiments/gi/seed_pass.gd" id="2_sedk"]
+[ext_resource type="Script" uid="uid://w0rcfsjgdswb" path="res://experiments/gi/jump_flood_pass.gd" id="3_jmpf"]
+[ext_resource type="Script" uid="uid://dxbaeag5acj6o" path="res://experiments/gi/distance_field_pass.gd" id="4_dstf"]
+[ext_resource type="Script" uid="uid://djnyag2j8s8vj" path="res://experiments/gi/raymarch_pass.gd" id="5_rmch"]
+[ext_resource type="Shader" uid="uid://c4ft7j68j4q84" path="res://experiments/gi/gi_display.gdshader" id="6_srgb"]
+[ext_resource type="Script" uid="uid://cr76w8sq82loi" path="res://experiments/gi/temporal_pass.gd" id="10_tmp"]
+[ext_resource type="Script" uid="uid://cbr0p4ypqlb7v" path="res://experiments/gi/atrous_pass.gd" id="11_atr"]
+[ext_resource type="Script" path="res://experiments/gi/ao_pass.gd" id="ao_pass"]
+[ext_resource type="Script" path="res://experiments/gi/blur_pass.gd" id="blur_pass"]
+[ext_resource type="Script" uid="uid://bj01xghot7p6w" path="res://experiments/gi/directional_light_pass.gd" id="dir_light"]
+[ext_resource type="Script" path="res://experiments/gi/indirect_pass.gd" id="indirect_pass"]
+[ext_resource type="Script" uid="uid://61k8h67ny1eg" path="res://experiments/gi/mouse_ball.gd" id="mouse_ball"]
+
+[sub_resource type="GDScript" id="GDScript_camera_controller"]
+script/source = "extends Node
+"
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_ikwhx"]
+shader = ExtResource("1_3klt6")
+shader_parameter/dirt_color = Color(0.42, 0.28, 0.15, 1)
+shader_parameter/dark_color = Color(0.3, 0.18, 0.08, 1)
+shader_parameter/light_color = Color(0.55, 0.38, 0.22, 1)
+shader_parameter/noise_scale = 6.3950002800125
+shader_parameter/roughness = 0.6
+shader_parameter/pebble_amount = 0.082000003895
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_composite"]
+shader = ExtResource("6_srgb")
+shader_parameter/indirect_strength = 1.0
+shader_parameter/ao_strength = 1.0
+shader_parameter/dir_color = Color(0.13803375, 0.13803375, 0.13803372, 1)
+shader_parameter/shadow_color = Color(0, 0, 0, 0.0627451)
+
+[sub_resource type="GDScript" id="GDScript_composite"]
+script/source = "extends ColorRect
+
+@onready var pass_indirect: ComputePass = $\"../GridContainer/PassATrous3\"
+@onready var pass_directional: ComputePass = $\"../GridContainer/PassDirectionalLight\"
+@onready var pass_ao: ComputePass = $\"../GridContainer/PassAO\"
+@onready var pass_scale: ComputePass = $\"../GridContainer/ScalePass\"
+@onready var source_viewport: SubViewport = $\"../SourceViewport\"
+
+func _process(delta: float) -> void:
+	var indirect_tex := Texture2DRD.new()
+	indirect_tex.texture_rd_rid = pass_indirect.get_output_resource_id()
+	material.set_shader_parameter(\"indirect_texture\", indirect_tex)
+
+	var dir_tex := Texture2DRD.new()
+	dir_tex.texture_rd_rid = pass_directional.get_output_resource_id()
+	material.set_shader_parameter(\"directional_texture\", dir_tex)
+
+	var ao_tex := Texture2DRD.new()
+	ao_tex.texture_rd_rid = pass_ao.get_output_resource_id()
+	material.set_shader_parameter(\"ao_texture\", ao_tex)
+
+	material.set_shader_parameter(\"screen_texture\", source_viewport.get_texture())
+"
+
+[sub_resource type="Gradient" id="Gradient_red"]
+offsets = PackedFloat32Array(0)
+colors = PackedColorArray(2.1947, 1.4086, 1.5675, 1)
+
+[sub_resource type="GradientTexture2D" id="GradTex_red"]
+gradient = SubResource("Gradient_red")
+width = 34
+height = 20
+use_hdr = true
+fill = 1
+fill_to = Vector2(1, 1)
+
+[sub_resource type="Gradient" id="Gradient_green"]
+offsets = PackedFloat32Array(0)
+colors = PackedColorArray(0, 1, 0, 1)
+
+[sub_resource type="GradientTexture2D" id="GradTex_green"]
+gradient = SubResource("Gradient_green")
+width = 17
+height = 17
+use_hdr = true
+fill = 1
+fill_to = Vector2(1, 1)
+
+[sub_resource type="Gradient" id="Gradient_blue"]
+colors = PackedColorArray(1.2814733, 0, 0.63772565, 1, 0, 1.1721152, 0.9721227, 1)
+
+[sub_resource type="GradientTexture2D" id="GradTex_blue"]
+gradient = SubResource("Gradient_blue")
+width = 20
+height = 20
+use_hdr = true
+fill = 1
+fill_to = Vector2(1, 1)
+
+[sub_resource type="Gradient" id="Gradient_yellow"]
+offsets = PackedFloat32Array(0)
+colors = PackedColorArray(1.8737413, 1.8737413, 0, 1)
+
+[sub_resource type="GradientTexture2D" id="GradTex_yellow"]
+gradient = SubResource("Gradient_yellow")
+width = 13
+height = 14
+use_hdr = true
+fill = 1
+fill_to = Vector2(1, 1)
+
+[sub_resource type="Gradient" id="Gradient_wall"]
+offsets = PackedFloat32Array(0)
+colors = PackedColorArray(0, 0, 0, 0.34117648)
+
+[sub_resource type="GradientTexture2D" id="GradTex_wall"]
+gradient = SubResource("Gradient_wall")
+width = 38
+height = 104
+
+[sub_resource type="Gradient" id="Gradient_icwau"]
+offsets = PackedFloat32Array(0)
+colors = PackedColorArray(0, 0, 0, 0.2627451)
+
+[sub_resource type="GradientTexture2D" id="GradientTexture2D_2c53f"]
+gradient = SubResource("Gradient_icwau")
+width = 38
+height = 104
+
+[sub_resource type="GradientTexture2D" id="GradTex_wall2"]
+gradient = SubResource("Gradient_wall")
+width = 105
+height = 44
+
+[node name="GI" type="Node" unique_id=1111836022]
+script = SubResource("GDScript_camera_controller")
+
+[node name="ColorRect" type="ColorRect" parent="." unique_id=1587643849]
+material = SubResource("ShaderMaterial_ikwhx")
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Composite" type="ColorRect" parent="." unique_id=1084039667]
+material = SubResource("ShaderMaterial_composite")
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = SubResource("GDScript_composite")
+metadata/_edit_lock_ = true
+
+[node name="Camera2D" type="Camera2D" parent="." unique_id=1]
+position = Vector2(512, 512)
+
+[node name="MouseBall" type="Sprite2D" parent="." unique_id=1953416823]
+position = Vector2(480, 616)
+texture = ExtResource("1_icwau")
+script = ExtResource("mouse_ball")
+ball_radius = 16.0
+ball_color = Color(1.2170635, 1.6223351, 3.7045925, 1)
+
+[node name="RemoteTransform2D" type="RemoteTransform2D" parent="MouseBall" unique_id=1488314477]
+remote_path = NodePath("../../SourceViewport/MouseBall")
+
+[node name="SourceViewport" type="SubViewport" parent="." unique_id=365785222]
+transparent_bg = true
+use_hdr_2d = true
+size = Vector2i(1024, 1024)
+render_target_update_mode = 4
+
+[node name="RectRed" type="Sprite2D" parent="SourceViewport" unique_id=2122475430]
+position = Vector2(12.000004, 422.5)
+scale = Vector2(0.7058825, 1.3500005)
+texture = SubResource("GradTex_red")
+
+[node name="RectGreen" type="Sprite2D" parent="SourceViewport" unique_id=1820827676]
+position = Vector2(969.75, 483.25)
+scale = Vector2(6.4411764, 4.382353)
+texture = SubResource("GradTex_green")
+
+[node name="RectBlue" type="Sprite2D" parent="SourceViewport" unique_id=1984094104]
+position = Vector2(519, 857.5)
+scale = Vector2(5.599999, 1.35)
+texture = SubResource("GradTex_blue")
+
+[node name="RectYellow" type="Sprite2D" parent="SourceViewport" unique_id=345574394]
+visible = false
+position = Vector2(639, 250.99998)
+scale = Vector2(10.653846, 2.2142863)
+texture = SubResource("GradTex_yellow")
+
+[node name="Wall" type="Sprite2D" parent="SourceViewport" unique_id=1809845362]
+position = Vector2(200, 492.99997)
+scale = Vector2(4.5263157, 5.0961533)
+texture = SubResource("GradTex_wall")
+
+[node name="Wall3" type="Sprite2D" parent="SourceViewport" unique_id=1009835143]
+position = Vector2(546, 432.00003)
+scale = Vector2(7.9999986, 1.3846152)
+texture = SubResource("GradientTexture2D_2c53f")
+
+[node name="Wall4" type="Sprite2D" parent="SourceViewport" unique_id=59226564]
+position = Vector2(849.00006, 179)
+scale = Vector2(7.9999986, 0.5576926)
+texture = SubResource("GradTex_wall")
+
+[node name="Wall2" type="Sprite2D" parent="SourceViewport" unique_id=385400321]
+position = Vector2(206.75, 122.5)
+scale = Vector2(3.947619, 5.568182)
+texture = SubResource("GradTex_wall2")
+
+[node name="Label" type="Label" parent="SourceViewport" unique_id=1781333821]
+visible = false
+modulate = Color(1.598561, 1.598561, 1.598561, 1)
+offset_left = 752.0
+offset_top = 769.0
+offset_right = 879.0
+offset_bottom = 799.0
+text = "Source Viewport"
+
+[node name="MouseBall" type="Sprite2D" parent="SourceViewport" unique_id=1619033999]
+position = Vector2(480, 616)
+texture = ExtResource("1_icwau")
+script = ExtResource("mouse_ball")
+ball_radius = 16.0
+ball_color = Color(1.2170635, 1.6223351, 3.7045925, 1)
+
+[node name="GridContainer" type="GridContainer" parent="." unique_id=907871754]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+columns = 7
+metadata/_edit_lock_ = true
+metadata/_edit_group_ = true
+
+[node name="ScalePassHalf" type="Control" parent="GridContainer" unique_id=-294967295 node_paths=PackedStringArray("source_viewport")]
+custom_minimum_size = Vector2(128, 128)
+layout_mode = 2
+script = ExtResource("1_nk48r")
+scale_target_width = 512
+scale_target_height = 512
+source_viewport = NodePath("../../SourceViewport")
+
+[node name="Display" type="TextureRect" parent="GridContainer/ScalePassHalf" unique_id=-294967294]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+expand_mode = 1
+
+[node name="ScalePassQuarter" type="Control" parent="GridContainer" unique_id=-294967293 node_paths=PackedStringArray("source_viewport")]
+custom_minimum_size = Vector2(128, 128)
+layout_mode = 2
+script = ExtResource("1_nk48r")
+scale_target_width = 256
+scale_target_height = 256
+source_viewport = NodePath("../../SourceViewport")
+
+[node name="Display" type="TextureRect" parent="GridContainer/ScalePassQuarter" unique_id=-294967292]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+expand_mode = 1
+
+[node name="ScalePass" type="Control" parent="GridContainer" unique_id=1105571957 node_paths=PackedStringArray("source_viewport")]
+layout_mode = 2
+script = ExtResource("1_nk48r")
+source_viewport = NodePath("../../SourceViewport")
+
+[node name="PassSeed" type="Control" parent="GridContainer" unique_id=695587462]
+custom_minimum_size = Vector2(128, 128)
+layout_mode = 2
+script = ExtResource("2_sedk")
+
+[node name="Display" type="TextureRect" parent="GridContainer/PassSeed" unique_id=1927380431]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+expand_mode = 1
+
+[node name="PassJF1" type="Control" parent="GridContainer" unique_id=46493216]
+custom_minimum_size = Vector2(128, 128)
+layout_mode = 2
+script = ExtResource("3_jmpf")
+jump_flood_step_divisor = 2
+
+[node name="Display" type="TextureRect" parent="GridContainer/PassJF1" unique_id=249594312]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+expand_mode = 1
+
+[node name="PassJF2" type="Control" parent="GridContainer" unique_id=1144378504]
+custom_minimum_size = Vector2(128, 128)
+layout_mode = 2
+script = ExtResource("3_jmpf")
+jump_flood_step_divisor = 4
+
+[node name="Display" type="TextureRect" parent="GridContainer/PassJF2" unique_id=1573377801]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+expand_mode = 1
+
+[node name="PassJF3" type="Control" parent="GridContainer" unique_id=1313399868]
+custom_minimum_size = Vector2(128, 128)
+layout_mode = 2
+script = ExtResource("3_jmpf")
+jump_flood_step_divisor = 8
+
+[node name="Display" type="TextureRect" parent="GridContainer/PassJF3" unique_id=1830938071]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+expand_mode = 1
+
+[node name="PassJF4" type="Control" parent="GridContainer" unique_id=735469629]
+custom_minimum_size = Vector2(128, 128)
+layout_mode = 2
+script = ExtResource("3_jmpf")
+jump_flood_step_divisor = 16
+
+[node name="Display" type="TextureRect" parent="GridContainer/PassJF4" unique_id=908828309]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+expand_mode = 1
+
+[node name="PassJF5" type="Control" parent="GridContainer" unique_id=1183962393]
+custom_minimum_size = Vector2(128, 128)
+layout_mode = 2
+script = ExtResource("3_jmpf")
+jump_flood_step_divisor = 32
+
+[node name="Display" type="TextureRect" parent="GridContainer/PassJF5" unique_id=766927849]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+expand_mode = 1
+
+[node name="PassJF6" type="Control" parent="GridContainer" unique_id=1825850529]
+custom_minimum_size = Vector2(128, 128)
+layout_mode = 2
+script = ExtResource("3_jmpf")
+jump_flood_step_divisor = 64
+
+[node name="Display" type="TextureRect" parent="GridContainer/PassJF6" unique_id=1823582954]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+expand_mode = 1
+
+[node name="PassJF7" type="Control" parent="GridContainer" unique_id=1769187013]
+custom_minimum_size = Vector2(128, 128)
+layout_mode = 2
+script = ExtResource("3_jmpf")
+jump_flood_step_divisor = 128
+
+[node name="Display" type="TextureRect" parent="GridContainer/PassJF7" unique_id=1641195137]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+expand_mode = 1
+
+[node name="PassJF8" type="Control" parent="GridContainer" unique_id=171121828]
+custom_minimum_size = Vector2(128, 128)
+layout_mode = 2
+script = ExtResource("3_jmpf")
+jump_flood_step_divisor = 256
+
+[node name="Display" type="TextureRect" parent="GridContainer/PassJF8" unique_id=1832767830]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+expand_mode = 1
+
+[node name="PassDF" type="Control" parent="GridContainer" unique_id=1818259412]
+custom_minimum_size = Vector2(128, 128)
+layout_mode = 2
+script = ExtResource("4_dstf")
+
+[node name="Display" type="TextureRect" parent="GridContainer/PassDF" unique_id=454206285]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+expand_mode = 1
+
+[node name="PassRM" type="Control" parent="GridContainer" unique_id=81042105 node_paths=PackedStringArray("primary_input", "extra_input_sources")]
+custom_minimum_size = Vector2(128, 128)
+layout_mode = 2
+script = ExtResource("5_rmch")
+primary_input = NodePath("../ScalePass")
+extra_input_sources = [NodePath("../PassDF")]
+
+[node name="Display" type="TextureRect" parent="GridContainer/PassRM" unique_id=1238034282]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+expand_mode = 1
+
+[node name="PassIndirect" type="Control" parent="GridContainer" unique_id=1705032707 node_paths=PackedStringArray("primary_input", "extra_input_sources")]
+custom_minimum_size = Vector2(128, 128)
+layout_mode = 2
+script = ExtResource("indirect_pass")
+primary_input = NodePath("../PassRM")
+extra_input_sources = [NodePath("../ScalePass"), NodePath("../PassDF")]
+
+[node name="Display" type="TextureRect" parent="GridContainer/PassIndirect" unique_id=1705032708]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+expand_mode = 1
+
+[node name="PassTemporal" type="Control" parent="GridContainer" unique_id=1000000001 node_paths=PackedStringArray("primary_input")]
+custom_minimum_size = Vector2(128, 128)
+layout_mode = 2
+script = ExtResource("10_tmp")
+primary_input = NodePath("../PassIndirect")
+
+[node name="Display" type="TextureRect" parent="GridContainer/PassTemporal" unique_id=1000000002]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+expand_mode = 1
+
+[node name="PassATrous1" type="Control" parent="GridContainer" unique_id=2000000001 node_paths=PackedStringArray("extra_input_sources")]
+custom_minimum_size = Vector2(128, 128)
+layout_mode = 2
+script = ExtResource("11_atr")
+extra_input_sources = [NodePath("../PassDF")]
+
+[node name="Display" type="TextureRect" parent="GridContainer/PassATrous1" unique_id=2000000002]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+expand_mode = 1
+
+[node name="PassATrous2" type="Control" parent="GridContainer" unique_id=2000000003 node_paths=PackedStringArray("extra_input_sources")]
+custom_minimum_size = Vector2(128, 128)
+layout_mode = 2
+script = ExtResource("11_atr")
+atrous_step_size = 2
+extra_input_sources = [NodePath("../PassDF")]
+
+[node name="Display" type="TextureRect" parent="GridContainer/PassATrous2" unique_id=2000000004]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+expand_mode = 1
+
+[node name="PassATrous3" type="Control" parent="GridContainer" unique_id=2000000005 node_paths=PackedStringArray("extra_input_sources")]
+custom_minimum_size = Vector2(128, 128)
+layout_mode = 2
+script = ExtResource("11_atr")
+atrous_step_size = 4
+extra_input_sources = [NodePath("../PassDF")]
+
+[node name="Display" type="TextureRect" parent="GridContainer/PassATrous3" unique_id=2000000006]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+expand_mode = 1
+
+[node name="ScalePass2" type="Control" parent="GridContainer" unique_id=894162719]
+layout_mode = 2
+script = ExtResource("1_nk48r")
+
+[node name="PassDirectionalLight" type="Control" parent="GridContainer" unique_id=1234567890 node_paths=PackedStringArray("primary_input", "extra_input_sources")]
+custom_minimum_size = Vector2(128, 128)
+layout_mode = 2
+script = ExtResource("dir_light")
+light_direction = Vector2(-1, 1)
+primary_input = NodePath("../ScalePass")
+extra_input_sources = [NodePath("../PassDF")]
+
+[node name="Display" type="TextureRect" parent="GridContainer/PassDirectionalLight" unique_id=1234567891]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+expand_mode = 1
+
+[node name="BlurHorizontal" type="Control" parent="GridContainer" unique_id=705032705]
+custom_minimum_size = Vector2(128, 128)
+layout_mode = 2
+script = ExtResource("blur_pass")
+
+[node name="Display" type="TextureRect" parent="GridContainer/BlurHorizontal" unique_id=705032706]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+expand_mode = 1
+
+[node name="BlurVertical" type="Control" parent="GridContainer" unique_id=705032707 node_paths=PackedStringArray("primary_input")]
+custom_minimum_size = Vector2(128, 128)
+layout_mode = 2
+script = ExtResource("blur_pass")
+blur_direction = 1
+primary_input = NodePath("../BlurHorizontal")
+
+[node name="Display" type="TextureRect" parent="GridContainer/BlurVertical" unique_id=705032708]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+expand_mode = 1
+
+[node name="PassAO" type="Control" parent="GridContainer" unique_id=-1294967295 node_paths=PackedStringArray("primary_input", "extra_input_sources")]
+custom_minimum_size = Vector2(128, 128)
+layout_mode = 2
+script = ExtResource("ao_pass")
+primary_input = NodePath("../ScalePass")
+extra_input_sources = [NodePath("../PassDF")]
+
+[node name="Display" type="TextureRect" parent="GridContainer/PassAO" unique_id=-1294967294]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+expand_mode = 1

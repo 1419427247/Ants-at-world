@@ -40,6 +40,7 @@ func _create_history_texture(width: int, height: int, data_format: RenderingDevi
 	texture_format.format = data_format
 	texture_format.usage_bits = (
 		RenderingDevice.TEXTURE_USAGE_STORAGE_BIT |
+		RenderingDevice.TEXTURE_USAGE_SAMPLING_BIT |
 		RenderingDevice.TEXTURE_USAGE_CAN_COPY_TO_BIT |
 		RenderingDevice.TEXTURE_USAGE_CAN_COPY_FROM_BIT
 	)
