@@ -1,0 +1,14 @@
+[remap]
+
+importer="glsl"
+type="RDShaderFile"
+uid="uid://w0y8fqlaxnkm"
+path="res://.godot/imported/normal_pass.glsl-c4c8de72e65b5b0aa97065f866b99cee.res"
+
+[deps]
+
+source_file="res://addons/gi2d/shaders/normal_pass.glsl"
+dest_files=["res://.godot/imported/normal_pass.glsl-c4c8de72e65b5b0aa97065f866b99cee.res"]
+
+[params]
+

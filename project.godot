@@ -19,10 +19,11 @@ config/icon="res://icon.svg"
 
 window/size/viewport_width=1920
 window/size/viewport_height=1080
-window/size/window_width_override=1280
-window/size/window_height_override=720
 window/hdr/request_hdr_output=true
-window/stretch/mode="viewport"
+
+[editor_plugins]
+
+enabled=PackedStringArray("res://addons/gi2d/plugin.cfg")
 
 [physics]
 

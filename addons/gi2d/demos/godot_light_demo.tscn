@@ -1,0 +1,50 @@
+[gd_scene format=3 uid="uid://bgolight001"]
+
+[ext_resource type="Script" uid="uid://dqpl8chhiuh4t" path="res://addons/gi2d/demos/godot_light_demo.gd" id="demo"]
+
+[sub_resource type="Gradient" id="Gradient_jjidl"]
+colors = PackedColorArray(1, 1, 1, 1, 1, 1, 1, 0)
+
+[sub_resource type="GradientTexture2D" id="GradientTexture2D_jjidl"]
+gradient = SubResource("Gradient_jjidl")
+fill = 1
+fill_from = Vector2(0.5, 0.5)
+fill_to = Vector2(0.8, 0.2)
+
+[node name="GodotLightDemo" type="Node" unique_id=622079820]
+script = ExtResource("demo")
+light_texture = SubResource("GradientTexture2D_jjidl")
+
+[node name="Background" type="ColorRect" parent="." unique_id=1107639631]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.5019608, 0.5019608, 0.5019608, 1)
+
+[node name="Camera2D" type="Camera2D" parent="." unique_id=1065670562]
+position = Vector2(960, 540)
+
+[node name="CanvasModulate" type="CanvasModulate" parent="." unique_id=2136418139]
+color = Color(0.12, 0.12, 0.16, 1)
+
+[node name="DirectionalLight2D" type="DirectionalLight2D" parent="." unique_id=480528088]
+energy = 0.5
+height = 100.0
+max_distance = 3000.0
+
+[node name="Arena" type="Node2D" parent="." unique_id=1419095292]
+
+[node name="Balls" type="Node2D" parent="." unique_id=1934689073]
+
+[node name="UI" type="CanvasLayer" parent="." unique_id=56664648]
+
+[node name="Label" type="Label" parent="UI" unique_id=1085106988]
+offset_left = 10.0
+offset_top = 10.0
+offset_right = 400.0
+offset_bottom = 100.0
+text = "Godot Native 2D Lighting
+Left: Spawn ball | Right: Big white ball
+R: Reset | Space: Random | S: Toggle shadows | C: Clear"

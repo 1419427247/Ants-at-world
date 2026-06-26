@@ -1,0 +1,14 @@
+[remap]
+
+importer="glsl"
+type="RDShaderFile"
+uid="uid://citobqntp3qwn"
+path="res://.godot/imported/atrous.glsl-05eda5b4dcf6afe9b6653725a6f97348.res"
+
+[deps]
+
+source_file="res://addons/gi2d/shaders/atrous.glsl"
+dest_files=["res://.godot/imported/atrous.glsl-05eda5b4dcf6afe9b6653725a6f97348.res"]
+
+[params]
+

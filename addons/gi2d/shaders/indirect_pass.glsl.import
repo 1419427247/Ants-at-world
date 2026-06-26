@@ -1,0 +1,14 @@
+[remap]
+
+importer="glsl"
+type="RDShaderFile"
+uid="uid://7boiwojnnyvm"
+path="res://.godot/imported/indirect_pass.glsl-c65faf02191ca153d02fc9ff6a8aaa88.res"
+
+[deps]
+
+source_file="res://addons/gi2d/shaders/indirect_pass.glsl"
+dest_files=["res://.godot/imported/indirect_pass.glsl-c65faf02191ca153d02fc9ff6a8aaa88.res"]
+
+[params]
+

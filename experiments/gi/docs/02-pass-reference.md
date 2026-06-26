@@ -199,7 +199,7 @@ step = maxi(step, maxi(1, int(source_height) / jump_flood_step_divisor))
 `_process()` 中每帧累加旋转偏移：
 ```gdscript
 raymarch_rotation_offset += raymarch_rotation_speed * delta
-super._process(delta)
+super(delta)
 ```
 
 #### 输入输出

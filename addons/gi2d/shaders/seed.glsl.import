@@ -1,0 +1,14 @@
+[remap]
+
+importer="glsl"
+type="RDShaderFile"
+uid="uid://34o0ya0yvwmm"
+path="res://.godot/imported/seed.glsl-a3207ccd7a1f810074acaba84744ec9f.res"
+
+[deps]
+
+source_file="res://addons/gi2d/shaders/seed.glsl"
+dest_files=["res://.godot/imported/seed.glsl-a3207ccd7a1f810074acaba84744ec9f.res"]
+
+[params]
+
