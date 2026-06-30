@@ -103,20 +103,20 @@ func _draw_body_segments() -> void:
 
 
 func _get_segment_direction(joint: ChainJoint, segments: Array) -> Vector2:
-	var idx: int = -1
+	var index: int = -1
 	for i: int in range(segments.size()):
 		if segments[i]["joint"] == joint:
-			idx = i
+			index = i
 			break
-	if idx < 0:
+	if index < 0:
 		return Vector2.RIGHT
 
 	var prev_joint: ChainJoint = null
 	var next_joint: ChainJoint = null
-	if idx > 0:
-		prev_joint = segments[idx - 1]["joint"]
-	if idx < segments.size() - 1:
-		next_joint = segments[idx + 1]["joint"]
+	if index > 0:
+		prev_joint = segments[index - 1]["joint"]
+	if index < segments.size() - 1:
+		next_joint = segments[index + 1]["joint"]
 
 	if prev_joint and next_joint:
 		return (next_joint.global_position - prev_joint.global_position).normalized()

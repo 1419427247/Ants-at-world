@@ -17,7 +17,6 @@ layout(push_constant, std430) uniform UniformParameters {
     // --- Pass 特有参数（世界单位制） ---
     int   num_samples;      // 采样方向数
     float radius;           // 采样半径（世界单位）
-    float intensity;        // 遮蔽强度
     float sdf_scale;        // SDF 直接估算的缩放系数
 } uniform_parameters;
 
@@ -103,7 +102,7 @@ void main() {
     total_occlusion /= float(uniform_parameters.num_samples);
 
     // 合并：取 SDF 基础项和射线项的最大值
-    float ao = max(sdf_ao, total_occlusion) * uniform_parameters.intensity;
+    float ao = max(sdf_ao, total_occlusion);
     ao = clamp(ao, 0.0, 1.0);
 
     // 输出：R=AO因子（1=完全遮挡，0=无遮挡）

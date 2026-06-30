@@ -1,5 +1,6 @@
 [gd_scene format=3 uid="uid://bgidemo001"]
 
+[ext_resource type="Script" uid="uid://8vupay3e1fg4" path="res://creatures/creature_controller.gd" id="2_aisp0"]
 [ext_resource type="Script" uid="uid://cv3uf25u6r4ic" path="res://addons/gi2d/src/seed_pass.gd" id="2_sedk"]
 [ext_resource type="Script" uid="uid://w0rcfsjgdswb" path="res://addons/gi2d/src/jump_flood_pass.gd" id="3_jmpf"]
 [ext_resource type="Script" uid="uid://cubeif1extunx" path="res://addons/gi2d/src/composite.gd" id="4_comp"]
@@ -18,10 +19,16 @@
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_composite"]
 shader = ExtResource("6_srgb")
-shader_parameter/indirect_strength = 0.50000002375
+shader_parameter/indirect_strength = 1.0
 shader_parameter/ao_strength = 1.0
-shader_parameter/directional_light_color = Color(0.103743516, 0.10374353, 0.103743516, 1)
-shader_parameter/directional_shadow_color = Color(0, 0, 0, 1)
+shader_parameter/directional_light_color = Color(0, 0, 0, 1)
+shader_parameter/directional_near_shadow_color = Color(0, 0, 0, 1)
+shader_parameter/directional_shadow_color = Color(0, 0, 0, 0)
+shader_parameter/shadow_dist_scale = 1.338000063555
+shader_parameter/shadow_dist_bias = 0.3100000622249999
+shader_parameter/pixel_size = 4.0
+shader_parameter/grid_line_width = 1.0
+shader_parameter/grid_line_color = Color(0, 0, 0, 0.039215688)
 shader_parameter/gi_uv_offset = Vector2(0, 0)
 shader_parameter/gi_uv_scale = Vector2(1, 1)
 
@@ -36,10 +43,11 @@ offset_right = 2810.0
 offset_bottom = 1983.0
 grow_horizontal = 2
 grow_vertical = 2
-color = Color(0.5019608, 0.5019608, 0.5019608, 1)
+color = Color(0.20033014, 0.20032996, 0.20032999, 1)
 
-[node name="Camera2D" type="Camera2D" parent="." unique_id=1104810992]
+[node name="Camera" type="Camera2D" parent="." unique_id=1104810992]
 position = Vector2(960, 540)
+script = ExtResource("2_aisp0")
 
 [node name="Arena" type="Node2D" parent="." unique_id=962851705]
 
@@ -53,8 +61,8 @@ sdf_scale = 2
 size = Vector2i(1920, 1080)
 render_target_update_mode = 4
 script = ExtResource("5_vp")
-main_camera = NodePath("../Camera2D")
-margin = -0.3
+main_camera = NodePath("../Camera")
+margin = -0.25
 
 [node name="CanvasLayer" type="CanvasLayer" parent="." unique_id=56479533]
 
@@ -79,6 +87,7 @@ source_viewport = NodePath("../../../GILightViewport")
 [node name="PassSeed" type="Node" parent="CanvasLayer/Composite" unique_id=1922534280 node_paths=PackedStringArray("source_viewport")]
 script = ExtResource("2_sedk")
 source_viewport = NodePath("../../../GILightViewport")
+output_scale = 0.75
 
 [node name="PassJF1" type="Node" parent="CanvasLayer/Composite" unique_id=1532780837]
 script = ExtResource("3_jmpf")
@@ -125,19 +134,22 @@ script = ExtResource("4_dstf")
 
 [node name="PassRM" type="Node" parent="CanvasLayer/Composite" unique_id=1732914836 node_paths=PackedStringArray("source_viewport", "extra_input_sources")]
 script = ExtResource("5_rmch")
+raymarch_num_samples = 23
+raymarch_attenuation = 10.205
 source_viewport = NodePath("../../../GILightViewport")
 extra_input_sources = [NodePath("../PassDF")]
-output_scale = 0.333
+output_scale = 0.5
 
 [node name="PassTemporal" type="Node" parent="CanvasLayer/Composite" unique_id=783416928]
 script = ExtResource("10_tmp")
-temporal_variance_scale = 2.0
 
 [node name="PassBlurH" type="Node" parent="CanvasLayer/Composite" unique_id=923099836]
 script = ExtResource("blur")
+blur_radius = 2
 
 [node name="PassBlurV" type="Node" parent="CanvasLayer/Composite" unique_id=923099837]
 script = ExtResource("blur")
+blur_radius = 2
 blur_direction = 1
 
 [node name="PassSharpenH" type="Node" parent="CanvasLayer/Composite" unique_id=923099835 node_paths=PackedStringArray("extra_input_sources")]
@@ -151,7 +163,8 @@ extra_input_sources = [NodePath("../PassBlurV")]
 
 [node name="PassDirectionalLight" type="Node" parent="CanvasLayer/Composite" unique_id=707649402 node_paths=PackedStringArray("source_viewport", "extra_input_sources")]
 script = ExtResource("dir_light")
-light_direction = Vector2(-1, 1)
+light_direction = Vector2(-1, 0.87)
+light_height = 8.0
 source_viewport = NodePath("../../../GILightViewport")
 extra_input_sources = [NodePath("../PassDF")]
 output_scale = 0.75

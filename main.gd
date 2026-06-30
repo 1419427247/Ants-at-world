@@ -39,8 +39,8 @@ func _process(delta: float) -> void:
 func _spawn_creatures() -> void:
 	var screen_size: Vector2 = get_viewport_rect().size
 
-	for type_idx: int in range(creature_types.size()):
-		var type_config: Dictionary = creature_types[type_idx]
+	for type_index: int in range(creature_types.size()):
+		var type_config: Dictionary = creature_types[type_index]
 		for _i: int in range(30):
 			var instance: Node2D = type_config["scene"].instantiate()
 			add_child(instance)
@@ -48,7 +48,7 @@ func _spawn_creatures() -> void:
 			# 配置生物数据
 			var data: CreatureData = CreatureData.new()
 			data.node = instance
-			data.type_index = type_idx
+			data.type_index = type_index
 			data.head_anchor = instance.get_node("Spine/HeadAnchor") as ChainJoint
 			data.wander_speed = randf_range(type_config["speed_min"], type_config["speed_max"])
 			# 初始目标在当前位置附近

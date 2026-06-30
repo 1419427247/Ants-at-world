@@ -1,0 +1,14 @@
+[remap]
+
+importer="glsl"
+type="RDShaderFile"
+uid="uid://bot3f013inykm"
+path="res://.godot/imported/sand_compute.glsl-b91c79451754582487e5f79d7b44cc6f.res"
+
+[deps]
+
+source_file="res://addons/gi2d/demos/sand_box/sand_compute.glsl"
+dest_files=["res://.godot/imported/sand_compute.glsl-b91c79451754582487e5f79d7b44cc6f.res"]
+
+[params]
+

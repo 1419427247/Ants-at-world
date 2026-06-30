@@ -1,6 +1,35 @@
 [gd_scene format=3 uid="uid://d0s724g2qy3an"]
 
 [ext_resource type="Script" uid="uid://ccyu8o71g22wd" path="res://main.gd" id="1_ig7tw"]
+[ext_resource type="Script" uid="uid://dhrtxsdl31nuw" path="res://addons/gi2d/src/gi_light_viewport.gd" id="2_vivmo"]
+[ext_resource type="Shader" uid="uid://c4ft7j68j4q84" path="res://addons/gi2d/shaders/gi_display.gdshader" id="3_2cqfq"]
+[ext_resource type="Script" uid="uid://cubeif1extunx" path="res://addons/gi2d/src/composite.gd" id="4_yaehf"]
+[ext_resource type="Script" uid="uid://cqowv1m55nh2x" path="res://addons/gi2d/src/normal_pass.gd" id="5_074og"]
+[ext_resource type="Script" uid="uid://cv3uf25u6r4ic" path="res://addons/gi2d/src/seed_pass.gd" id="6_cegan"]
+[ext_resource type="Script" uid="uid://w0rcfsjgdswb" path="res://addons/gi2d/src/jump_flood_pass.gd" id="7_82xsv"]
+[ext_resource type="Script" uid="uid://dxbaeag5acj6o" path="res://addons/gi2d/src/distance_field_pass.gd" id="8_getpj"]
+[ext_resource type="Script" uid="uid://djnyag2j8s8vj" path="res://addons/gi2d/src/raymarch_pass.gd" id="9_ryguw"]
+[ext_resource type="Script" uid="uid://cr76w8sq82loi" path="res://addons/gi2d/src/temporal_pass.gd" id="10_d13ii"]
+[ext_resource type="Script" path="res://addons/gi2d/src/blur_pass.gd" id="11_1u8w0"]
+[ext_resource type="Script" uid="uid://batdehwlwtbgu" path="res://addons/gi2d/src/sharpen_pass.gd" id="12_0odxb"]
+[ext_resource type="Script" uid="uid://bj01xghot7p6w" path="res://addons/gi2d/src/directional_light_pass.gd" id="13_lswn8"]
+[ext_resource type="Script" path="res://addons/gi2d/src/ao_pass.gd" id="14_a6jrf"]
+[ext_resource type="Script" uid="uid://vhxcia408t15" path="res://addons/gi2d/src/texture_from_pass.gd" id="15_xuqvo"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_qsp4k"]
+shader = ExtResource("3_2cqfq")
+shader_parameter/indirect_strength = 1.0
+shader_parameter/ao_strength = 1.0
+shader_parameter/directional_light_color = Color(0.024029793, 0.024029795, 0.024029793, 1)
+shader_parameter/directional_near_shadow_color = Color(0, 0, 0, 1)
+shader_parameter/directional_shadow_color = Color(0, 0, 0, 1)
+shader_parameter/shadow_dist_scale = 1.0
+shader_parameter/shadow_dist_bias = 0.0
+shader_parameter/pixel_size = 0.0
+shader_parameter/grid_line_width = 0.0
+shader_parameter/grid_line_color = Color(0, 0, 0, 0.3)
+shader_parameter/gi_uv_offset = Vector2(0, 0)
+shader_parameter/gi_uv_scale = Vector2(1, 1)
 
 [node name="Main" type="Node2D" unique_id=288582561]
 script = ExtResource("1_ig7tw")
@@ -8,13 +37,285 @@ script = ExtResource("1_ig7tw")
 [node name="CanvasLayer" type="CanvasLayer" parent="." unique_id=1547414883]
 layer = -1
 
-[node name="ColorRect" type="ColorRect" parent="CanvasLayer" unique_id=306510163]
+[node name="Background" type="ColorRect" parent="CanvasLayer" unique_id=553566588]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_right = 2810.0
+offset_bottom = 1983.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.5019608, 0.5019608, 0.5019608, 1)
+
+[node name="Camera2D" type="Camera2D" parent="." unique_id=1087423426]
+
+[node name="GILightViewport" type="SubViewport" parent="." unique_id=1191490721 node_paths=PackedStringArray("main_camera")]
+transparent_bg = true
+use_hdr_2d = true
+size = Vector2i(1920, 1080)
+render_target_update_mode = 4
+script = ExtResource("2_vivmo")
+main_camera = NodePath("../Camera2D")
+margin = -0.3
+
+[node name="CanvasLayer2" type="CanvasLayer" parent="." unique_id=1760906492]
+
+[node name="Composite" type="ColorRect" parent="CanvasLayer2" unique_id=948625754 node_paths=PackedStringArray("pass_diffuse", "pass_gi", "pass_directional", "pass_ao")]
+material = SubResource("ShaderMaterial_qsp4k")
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-color = Color(0.34906504, 0.34906504, 0.34906498, 1)
+mouse_filter = 2
+script = ExtResource("4_yaehf")
+pass_diffuse = NodePath("../../GILightViewport")
+pass_gi = NodePath("PassBlurV")
+pass_directional = NodePath("PassDirectionalLight")
+pass_ao = NodePath("PassAO")
 
-[node name="Camera2D" type="Camera2D" parent="." unique_id=1087423426]
-zoom = Vector2(0.5, 0.5)
+[node name="PassNormal" type="Node" parent="CanvasLayer2/Composite" unique_id=1377312155 node_paths=PackedStringArray("source_viewport")]
+script = ExtResource("5_074og")
+source_viewport = NodePath("")
+
+[node name="PassSeed" type="Node" parent="CanvasLayer2/Composite" unique_id=1097657357 node_paths=PackedStringArray("source_viewport")]
+script = ExtResource("6_cegan")
+source_viewport = NodePath("")
+output_scale = 0.75
+
+[node name="PassJF1" type="Node" parent="CanvasLayer2/Composite" unique_id=840979508]
+script = ExtResource("7_82xsv")
+jump_flood_step_divisor = 2
+use_square_step = false
+
+[node name="PassJF2" type="Node" parent="CanvasLayer2/Composite" unique_id=1214789568]
+script = ExtResource("7_82xsv")
+jump_flood_step_divisor = 4
+use_square_step = false
+
+[node name="PassJF3" type="Node" parent="CanvasLayer2/Composite" unique_id=374503509]
+script = ExtResource("7_82xsv")
+jump_flood_step_divisor = 8
+use_square_step = false
+
+[node name="PassJF4" type="Node" parent="CanvasLayer2/Composite" unique_id=41364206]
+script = ExtResource("7_82xsv")
+jump_flood_step_divisor = 16
+use_square_step = false
+
+[node name="PassJF5" type="Node" parent="CanvasLayer2/Composite" unique_id=1294904786]
+script = ExtResource("7_82xsv")
+jump_flood_step_divisor = 32
+use_square_step = false
+
+[node name="PassJF6" type="Node" parent="CanvasLayer2/Composite" unique_id=1261301286]
+script = ExtResource("7_82xsv")
+jump_flood_step_divisor = 64
+use_square_step = false
+
+[node name="PassJF7" type="Node" parent="CanvasLayer2/Composite" unique_id=863764150]
+script = ExtResource("7_82xsv")
+jump_flood_step_divisor = 128
+use_square_step = false
+
+[node name="PassJF8" type="Node" parent="CanvasLayer2/Composite" unique_id=1815090136]
+script = ExtResource("7_82xsv")
+jump_flood_step_divisor = 256
+use_square_step = false
+
+[node name="PassDF" type="Node" parent="CanvasLayer2/Composite" unique_id=285455777]
+script = ExtResource("8_getpj")
+
+[node name="PassRM" type="Node" parent="CanvasLayer2/Composite" unique_id=2135829452 node_paths=PackedStringArray("source_viewport", "extra_input_sources")]
+script = ExtResource("9_ryguw")
+raymarch_num_samples = 64
+source_viewport = NodePath("")
+extra_input_sources = [NodePath("../PassDF")]
+output_scale = 0.75
+
+[node name="PassTemporal" type="Node" parent="CanvasLayer2/Composite" unique_id=132466572]
+script = ExtResource("10_d13ii")
+
+[node name="PassBlurH" type="Node" parent="CanvasLayer2/Composite" unique_id=733254414]
+script = ExtResource("11_1u8w0")
+
+[node name="PassBlurV" type="Node" parent="CanvasLayer2/Composite" unique_id=1826606735]
+script = ExtResource("11_1u8w0")
+blur_direction = 1
+
+[node name="PassSharpenH" type="Node" parent="CanvasLayer2/Composite" unique_id=1078285056 node_paths=PackedStringArray("extra_input_sources")]
+script = ExtResource("12_0odxb")
+extra_input_sources = [NodePath("../PassBlurV")]
+
+[node name="PassSharpenV" type="Node" parent="CanvasLayer2/Composite" unique_id=1611311234 node_paths=PackedStringArray("extra_input_sources")]
+script = ExtResource("12_0odxb")
+sharpen_direction = 1
+extra_input_sources = [NodePath("../PassBlurV")]
+
+[node name="PassDirectionalLight" type="Node" parent="CanvasLayer2/Composite" unique_id=1083514597 node_paths=PackedStringArray("source_viewport", "extra_input_sources")]
+script = ExtResource("13_lswn8")
+light_direction = Vector2(-1, 1)
+source_viewport = NodePath("")
+extra_input_sources = [NodePath("../PassDF")]
+output_scale = 0.75
+
+[node name="PassAO" type="Node" parent="CanvasLayer2/Composite" unique_id=2030564838 node_paths=PackedStringArray("source_viewport", "extra_input_sources")]
+script = ExtResource("14_a6jrf")
+source_viewport = NodePath("")
+extra_input_sources = [NodePath("../PassDF")]
+output_scale = 0.333
+
+[node name="GridContainer" type="GridContainer" parent="CanvasLayer2" unique_id=1594916353]
+visible = false
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/h_separation = 0
+columns = 5
+metadata/_edit_lock_ = true
+
+[node name="NormalTextureRect" type="TextureRect" parent="CanvasLayer2/GridContainer" unique_id=888830192 node_paths=PackedStringArray("compute_pass")]
+texture_filter = 3
+custom_minimum_size = Vector2(256, 256)
+layout_mode = 2
+expand_mode = 1
+stretch_mode = 4
+script = ExtResource("15_xuqvo")
+compute_pass = NodePath("../../Composite/PassNormal")
+
+[node name="SeedTextureRect" type="TextureRect" parent="CanvasLayer2/GridContainer" unique_id=506944779 node_paths=PackedStringArray("compute_pass")]
+texture_filter = 3
+custom_minimum_size = Vector2(256, 256)
+layout_mode = 2
+expand_mode = 1
+stretch_mode = 4
+script = ExtResource("15_xuqvo")
+compute_pass = NodePath("../../Composite/PassSeed")
+
+[node name="JF1TextureRect" type="TextureRect" parent="CanvasLayer2/GridContainer" unique_id=1265888682 node_paths=PackedStringArray("compute_pass")]
+texture_filter = 3
+custom_minimum_size = Vector2(256, 256)
+layout_mode = 2
+expand_mode = 1
+stretch_mode = 4
+script = ExtResource("15_xuqvo")
+compute_pass = NodePath("../../Composite/PassJF1")
+
+[node name="JF2TextureRect" type="TextureRect" parent="CanvasLayer2/GridContainer" unique_id=602349278 node_paths=PackedStringArray("compute_pass")]
+texture_filter = 3
+custom_minimum_size = Vector2(256, 256)
+layout_mode = 2
+expand_mode = 1
+stretch_mode = 4
+script = ExtResource("15_xuqvo")
+compute_pass = NodePath("../../Composite/PassJF2")
+
+[node name="JF3TextureRect" type="TextureRect" parent="CanvasLayer2/GridContainer" unique_id=1501693346 node_paths=PackedStringArray("compute_pass")]
+texture_filter = 3
+custom_minimum_size = Vector2(256, 256)
+layout_mode = 2
+expand_mode = 1
+stretch_mode = 4
+script = ExtResource("15_xuqvo")
+compute_pass = NodePath("../../Composite/PassJF3")
+
+[node name="JF4TextureRect" type="TextureRect" parent="CanvasLayer2/GridContainer" unique_id=958835824 node_paths=PackedStringArray("compute_pass")]
+texture_filter = 3
+custom_minimum_size = Vector2(256, 256)
+layout_mode = 2
+expand_mode = 1
+stretch_mode = 4
+script = ExtResource("15_xuqvo")
+compute_pass = NodePath("../../Composite/PassJF4")
+
+[node name="JF5TextureRect" type="TextureRect" parent="CanvasLayer2/GridContainer" unique_id=165818483 node_paths=PackedStringArray("compute_pass")]
+texture_filter = 3
+custom_minimum_size = Vector2(256, 256)
+layout_mode = 2
+expand_mode = 1
+stretch_mode = 4
+script = ExtResource("15_xuqvo")
+compute_pass = NodePath("../../Composite/PassJF5")
+
+[node name="JF6TextureRect" type="TextureRect" parent="CanvasLayer2/GridContainer" unique_id=1090463064 node_paths=PackedStringArray("compute_pass")]
+texture_filter = 3
+custom_minimum_size = Vector2(256, 256)
+layout_mode = 2
+expand_mode = 1
+stretch_mode = 4
+script = ExtResource("15_xuqvo")
+compute_pass = NodePath("../../Composite/PassJF6")
+
+[node name="JF7TextureRect" type="TextureRect" parent="CanvasLayer2/GridContainer" unique_id=1081857473 node_paths=PackedStringArray("compute_pass")]
+texture_filter = 3
+custom_minimum_size = Vector2(256, 256)
+layout_mode = 2
+expand_mode = 1
+stretch_mode = 4
+script = ExtResource("15_xuqvo")
+compute_pass = NodePath("../../Composite/PassJF7")
+
+[node name="JF8TextureRect" type="TextureRect" parent="CanvasLayer2/GridContainer" unique_id=1980264715 node_paths=PackedStringArray("compute_pass")]
+texture_filter = 3
+custom_minimum_size = Vector2(256, 256)
+layout_mode = 2
+expand_mode = 1
+stretch_mode = 4
+script = ExtResource("15_xuqvo")
+compute_pass = NodePath("../../Composite/PassJF8")
+
+[node name="DFTextureRect" type="TextureRect" parent="CanvasLayer2/GridContainer" unique_id=1183905138 node_paths=PackedStringArray("compute_pass")]
+texture_filter = 3
+custom_minimum_size = Vector2(256, 256)
+layout_mode = 2
+expand_mode = 1
+stretch_mode = 4
+script = ExtResource("15_xuqvo")
+compute_pass = NodePath("../../Composite/PassDF")
+
+[node name="RMTextureRect" type="TextureRect" parent="CanvasLayer2/GridContainer" unique_id=1213347060 node_paths=PackedStringArray("compute_pass")]
+texture_filter = 3
+custom_minimum_size = Vector2(256, 256)
+layout_mode = 2
+expand_mode = 1
+stretch_mode = 4
+script = ExtResource("15_xuqvo")
+compute_pass = NodePath("../../Composite/PassRM")
+
+[node name="TemporalTextureRect" type="TextureRect" parent="CanvasLayer2/GridContainer" unique_id=1130360924 node_paths=PackedStringArray("compute_pass")]
+texture_filter = 3
+custom_minimum_size = Vector2(256, 256)
+layout_mode = 2
+expand_mode = 1
+stretch_mode = 4
+script = ExtResource("15_xuqvo")
+compute_pass = NodePath("../../Composite/PassTemporal")
+
+[node name="SharpenTextureRect" type="TextureRect" parent="CanvasLayer2/GridContainer" unique_id=1603090249 node_paths=PackedStringArray("compute_pass")]
+texture_filter = 3
+custom_minimum_size = Vector2(256, 256)
+layout_mode = 2
+expand_mode = 1
+stretch_mode = 4
+script = ExtResource("15_xuqvo")
+compute_pass = NodePath("../../Composite/PassSharpenV")
+
+[node name="DirectionalLightTextureRect" type="TextureRect" parent="CanvasLayer2/GridContainer" unique_id=1860938656 node_paths=PackedStringArray("compute_pass")]
+texture_filter = 3
+custom_minimum_size = Vector2(256, 256)
+layout_mode = 2
+expand_mode = 1
+stretch_mode = 4
+script = ExtResource("15_xuqvo")
+compute_pass = NodePath("../../Composite/PassDirectionalLight")
+
+[node name="AOTextureRect" type="TextureRect" parent="CanvasLayer2/GridContainer" unique_id=1649883729 node_paths=PackedStringArray("compute_pass")]
+texture_filter = 3
+custom_minimum_size = Vector2(256, 256)
+layout_mode = 2
+expand_mode = 1
+stretch_mode = 4
+script = ExtResource("15_xuqvo")
+compute_pass = NodePath("../../Composite/PassAO")

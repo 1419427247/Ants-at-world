@@ -1,0 +1,14 @@
+[remap]
+
+importer="glsl"
+type="RDShaderFile"
+uid="uid://n1bajw5xis0y"
+path="res://.godot/imported/preview_compute.glsl-8bc064e2808d8c141070cdb64e017e9a.res"
+
+[deps]
+
+source_file="res://addons/gi2d/demos/sand_box/preview_compute.glsl"
+dest_files=["res://.godot/imported/preview_compute.glsl-8bc064e2808d8c141070cdb64e017e9a.res"]
+
+[params]
+

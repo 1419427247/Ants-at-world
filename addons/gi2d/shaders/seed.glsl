@@ -32,13 +32,13 @@ void main() {
     int linear_id = local.y * WG + local.x;
     int tile_total = TILE * TILE;
 
-    for (int idx = linear_id; idx < tile_total; idx += WG * WG) {
-        int tx = idx % TILE;
-        int ty = idx / TILE;
+    for (int index = linear_id; index < tile_total; index += WG * WG) {
+        int tx = index % TILE;
+        int ty = index / TILE;
         ivec2 gpos = ivec2(gl_WorkGroupID.xy) * WG + ivec2(tx - MAX_R, ty - MAX_R);
         gpos = clamp(gpos, ivec2(0), texture_size - 1);
         vec2 tuv = (vec2(gpos) + 0.5) / vec2(texture_size);
-        alpha_tile[idx] = textureLod(input_image, tuv, 0.0).a;
+        alpha_tile[index] = textureLod(input_image, tuv, 0.0).a;
     }
 
     barrier();

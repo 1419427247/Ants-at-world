@@ -1,0 +1,14 @@
+[gd_scene format=3 uid="uid://v33v6asg301x"]
+
+[ext_resource type="Script" uid="uid://c0knk1s6n0t51" path="res://addons/gi2d/demos/sand_box/gi_sand_box.gd" id="1_4kiba"]
+[ext_resource type="Script" uid="uid://ejvuwgg2ml3w" path="res://addons/gi2d/demos/sand_box/state_grid.gd" id="2_hbmsq"]
+
+[node name="GISandBox" type="Node" unique_id=2069030356]
+script = ExtResource("1_4kiba")
+
+[node name="StateGrid" type="Node2D" parent="." unique_id=178064965]
+texture_filter = 1
+script = ExtResource("2_hbmsq")
+
+[node name="Camera2D" type="Camera2D" parent="." unique_id=845854345]
+zoom = Vector2(3.15, 3.15)

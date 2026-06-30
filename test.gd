@@ -55,8 +55,8 @@ func _process(delta: float) -> void:
 			l[4] = true
 			l[5] = 0.0
 			# swing_start = 当前位置, swing_end = 静止位置前方一跨步
-			l.append(l[3])  # idx 6: swing_start
-			l.append(_rest(l[1]) + Vector2.RIGHT * _stride)  # idx 7: swing_end
+			l.append(l[3])  # index 6: swing_start
+			l.append(_rest(l[1]) + Vector2.RIGHT * _stride)  # index 7: swing_end
 
 		if l[4]:
 			l[5] += delta * 2.5

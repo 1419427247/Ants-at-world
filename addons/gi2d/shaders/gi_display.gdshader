@@ -12,9 +12,17 @@ uniform sampler2D ao_texture;           // 环境光遮蔽 R=AO因子
 
 // 合成参数
 uniform float indirect_strength : hint_range(0.0, 4.0) = 1.0;
-uniform float ao_strength : hint_range(0.0, 1.0) = 1.0;
-uniform vec3 directional_light_color : source_color = vec3(1.0, 1.0, 1.0);
-uniform vec3 directional_shadow_color : source_color = vec3(0.0, 0.0, 0.0);
+uniform float ao_strength = 1.0;
+uniform vec4 directional_light_color : source_color = vec4(1.0, 1.0, 1.0,1.0);
+uniform vec4 directional_near_shadow_color : source_color = vec4(0.0, 0.0, 0.0,1.0);
+uniform vec4 directional_shadow_color : source_color = vec4(0.0, 0.0, 0.0,0.0);
+uniform float shadow_dist_scale : hint_range(0.0, 4.0) = 1.0;
+uniform float shadow_dist_bias : hint_range(-1.0, 1.0) = 0.0;
+
+// 像素化：0=关闭，>0 表示每个像素块的边长（像素数）
+uniform float pixel_size : hint_range(0.0, 32.0, 1.0) = 0.0;
+uniform float grid_line_width : hint_range(0.0, 4.0, 0.5) = 0.0;
+uniform vec4 grid_line_color : source_color = vec4(0.0, 0.0, 0.0, 0.3);
 
 // GI 纹理 UV 映射（当 GILightViewport 有 margin 时用于边缘裁剪）
 // gi_uv = gi_uv_offset + SCREEN_UV * gi_uv_scale
@@ -43,26 +51,52 @@ vec3 aces_tonemap(vec3 color) {
 }
 
 void fragment() {
+	// 像素化：将 UV 对齐到 pixel_size 宽的网格
+	vec2 uv = SCREEN_UV;
+	 if (pixel_size > 0.5) {
+	 	vec2 step = SCREEN_PIXEL_SIZE * pixel_size;
+	 	uv = floor(uv / step) * step + step * 0.5;
+	 }
+
 	// GI 纹理 UV：将主视口 SCREEN_UV 映射到 GI 纹理中主相机视野对应的区域
-	vec2 gi_uv = gi_uv_offset + SCREEN_UV * gi_uv_scale;
-	vec4 screen_color = texture(screen_texture, SCREEN_UV);
+	vec2 gi_uv = gi_uv_offset + uv * gi_uv_scale;
+	vec4 screen_color = texture(screen_texture, uv);
 	screen_color.rgb += texture(diffuse_texture, gi_uv).rgb;
 
 	vec3 gi_color = texture(gi_texture, gi_uv).rgb * indirect_strength;
+
 	float directional_mask = texture(directional_texture, gi_uv).r;  // 0=阴影, 1=光照
-	vec3 directional_color = mix(directional_shadow_color.rgb, directional_light_color.rgb, directional_mask);
+	directional_mask = clamp(directional_mask + ((texture(directional_texture, gi_uv).g + shadow_dist_bias) * shadow_dist_scale), 0.0, 1.0);
+
+	vec4 directional_color = mix(directional_shadow_color, directional_light_color, directional_mask);
 
 	float ao_mask = texture(ao_texture, gi_uv).r;
-	vec3 ao_color = vec3(clamp(1.0 - ao_mask * ao_strength, 0.1, 1.0));
+	// GI 和平行光都会填充 AO 的暗角
+	float gi_lum = dot(gi_color, vec3(0.299, 0.587, 0.114));
+	float any_light = max(gi_lum, directional_mask);
+	float ao_dark = ao_mask * ao_strength * (1.0 - clamp(any_light, 0.0, 1.0));
+	float ambient_level = clamp(0.3 * (1.0 - ao_dark), 0.0, 0.3);
+	vec3 ambient = vec3(ambient_level);
 
-	// AO 仅影响间接光，不影响直接光（直接阴影由 directional_mask 处理）
-	vec3 combined_light = gi_color * ao_color + directional_color;
-
-	vec3 result = combined_light * screen_color.rgb;
+	// GI 不受 AO 影响，方向光独立叠加
+	vec3 lighting = max(gi_color, ambient) + directional_color.rgb;
+	vec3 result = screen_color.rgb * lighting;
 
 	// 色调映射 + sRGB
 	vec3 tonemapped = aces_tonemap(result);
 	COLOR = vec4(lin_to_srgb(tonemapped), screen_color.a);
+
+	// 网格描边（仅在 pixel_size 开启时生效）
+	if (pixel_size > 0.5 && grid_line_width > 0.001) {
+		vec2 step = SCREEN_PIXEL_SIZE * pixel_size;
+		vec2 grid_origin = floor(SCREEN_UV / step) * step;
+		vec2 local = SCREEN_UV - grid_origin;
+		vec2 lw = SCREEN_PIXEL_SIZE * grid_line_width;
+		if (local.x < lw.x || local.x > step.x - lw.x ||
+			local.y < lw.y || local.y > step.y - lw.y) {
+			COLOR = mix(COLOR, grid_line_color, grid_line_color.a);
+		}
+	}
 	
 	//COLOR.rgb = gi_color;
 }

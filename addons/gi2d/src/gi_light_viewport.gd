@@ -14,6 +14,11 @@ var camera: Camera2D = Camera2D.new()
 func _init() -> void:
 	add_child(camera)
 
+func _ready() -> void:
+	transparent_bg = true
+	use_hdr_2d = true
+	render_target_update_mode = SubViewport.UPDATE_ALWAYS
+
 # Called every frame. 'delta' is the elapsed time since the previous frame.
 func _process(delta: float) -> void:
 	camera.global_transform = main_camera.global_transform

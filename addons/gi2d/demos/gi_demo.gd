@@ -33,7 +33,7 @@ var _circle: Texture2D
 
 var _last_camera_position: Vector2
 
-@onready var _camera: Camera2D = $Camera2D
+@onready var _camera: Camera2D = $Camera
 @onready var _arena: Node2D = $Arena
 @onready var _balls: Node2D = $Balls
 @onready var _gi_viewport: GILightViewport = $GILightViewport
